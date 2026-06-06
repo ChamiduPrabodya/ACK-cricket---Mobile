@@ -1,4 +1,13 @@
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import {
+  Animated,
+  Easing,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { colors, spacing } from '../theme';
 
 const logo = require('../assets/ack-logo.webp');
@@ -45,113 +54,373 @@ const bookingHighlights = [
   { label: 'Offers', value: '05' },
 ];
 
-function PromoCard({ item, featured = false }) {
+function PromoCard({ item, featured = false, motion, orbit }) {
+  const translateY = motion.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, featured ? -8 : -5],
+  });
+
+  const scale = motion.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, featured ? 1.02 : 1.01],
+  });
+
+  const orbitalX = orbit.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-14, 14],
+  });
+
+  const orbitalY = orbit.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [10, -12, 10],
+  });
+
   return (
-    <View
+    <Animated.View
       style={[
         styles.promoCard,
         { backgroundColor: item.tone },
         featured && styles.featuredPromoCard,
+        {
+          transform: [{ translateY }, { scale }],
+        },
       ]}
     >
-      <View style={[styles.promoGlow, { backgroundColor: item.accent }]} />
+      <Animated.View
+        style={[
+          styles.promoGlow,
+          { backgroundColor: item.accent, transform: [{ scale }] },
+        ]}
+      />
       <View style={styles.promoPattern} />
       <View style={styles.promoContent}>
         <Text style={styles.promoTitle}>{item.title}</Text>
         <Text style={styles.promoSubtitle}>{item.subtitle}</Text>
-        <View style={styles.promoButton}>
+        <Animated.View style={[styles.promoButton, { transform: [{ scale }] }]}>
           <Text style={styles.promoButtonText}>{item.cta}</Text>
-        </View>
+        </Animated.View>
       </View>
+
       <View style={styles.playerSilhouette}>
+        <Animated.View
+          style={[
+            styles.orbitBall,
+            {
+              backgroundColor: item.accent,
+              transform: [{ translateX: orbitalX }, { translateY: orbitalY }],
+            },
+          ]}
+        />
         <View style={styles.playerAura} />
         <View style={styles.playerBody} />
         <View style={styles.playerBat} />
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
 export default function HomeScreen() {
+  const entrance = useRef(new Animated.Value(0)).current;
+  const heroDrift = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(0)).current;
+  const promoMotion = useRef(new Animated.Value(0)).current;
+  const orbit = useRef(new Animated.Value(0)).current;
+  const linksRise = useRef(new Animated.Value(18)).current;
+  const linksOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(entrance, {
+        toValue: 1,
+        duration: 700,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.sequence([
+        Animated.delay(180),
+        Animated.parallel([
+          Animated.timing(linksRise, {
+            toValue: 0,
+            duration: 500,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(linksOpacity, {
+            toValue: 1,
+            duration: 500,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]),
+      ]),
+    ]).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(heroDrift, {
+          toValue: 1,
+          duration: 3200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(heroDrift, {
+          toValue: 0,
+          duration: 3200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 1200,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0,
+          duration: 1200,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(promoMotion, {
+          toValue: 1,
+          duration: 2600,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(promoMotion, {
+          toValue: 0,
+          duration: 2600,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.timing(orbit, {
+        toValue: 1,
+        duration: 2800,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start(() => {
+      orbit.setValue(0);
+    });
+  }, [entrance, heroDrift, linksOpacity, linksRise, orbit, promoMotion, pulse]);
+
+  const entranceOpacity = entrance.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+
+  const entranceTranslateY = entrance.interpolate({
+    inputRange: [0, 1],
+    outputRange: [24, 0],
+  });
+
+  const heroTranslateY = heroDrift.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -7],
+  });
+
+  const heroRotate = heroDrift.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '-1deg'],
+  });
+
+  const heroGlowScale = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.16],
+  });
+
+  const badgeScale = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.08],
+  });
+
+  const pulseOpacity = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.55, 1],
+  });
+
   return (
     <ScrollView
       style={styles.screen}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.heroShell}>
-        <View style={styles.topBar}>
-          <View style={styles.brandRow}>
-            <Image source={logo} style={styles.logo} resizeMode="contain" />
-            <View>
-              <Text style={styles.brandName}>ACK Turf</Text>
-              <Text style={styles.greeting}>Hello, good evening</Text>
+      <Animated.View
+        style={{
+          opacity: entranceOpacity,
+          transform: [{ translateY: entranceTranslateY }],
+        }}
+      >
+        <View style={styles.heroShell}>
+          <View style={styles.topBar}>
+            <View style={styles.brandRow}>
+              <Image source={logo} style={styles.logo} resizeMode="contain" />
+              <View>
+                <Text style={styles.brandName}>ACK Turf</Text>
+                <Text style={styles.greeting}>Hello, good evening</Text>
+              </View>
             </View>
+            <Animated.View
+              style={[
+                styles.notificationBubble,
+                {
+                  transform: [{ scale: badgeScale }],
+                  opacity: pulseOpacity,
+                },
+              ]}
+            >
+              <Text style={styles.notificationText}>3</Text>
+            </Animated.View>
           </View>
-          <View style={styles.notificationBubble}>
-            <Text style={styles.notificationText}>3</Text>
-          </View>
+
+          <Animated.View
+            style={[
+              styles.heroCard,
+              {
+                transform: [{ translateY: heroTranslateY }, { rotate: heroRotate }],
+              },
+            ]}
+          >
+            <Animated.View
+              style={[
+                styles.heroGlow,
+                {
+                  transform: [{ scale: heroGlowScale }],
+                  opacity: pulseOpacity,
+                },
+              ]}
+            />
+            <View style={styles.heroPattern} />
+            <Text style={styles.heroTitle}>Play Indoor Cricket Like a Pro</Text>
+            <Text style={styles.heroSubtitle}>
+              Book premium grounds, track sessions, and unlock member rewards.
+            </Text>
+
+            <View style={styles.heroStats}>
+              {bookingHighlights.map((item) => (
+                <Animated.View
+                  key={item.label}
+                  style={[
+                    styles.heroStatChip,
+                    { transform: [{ translateY: heroTranslateY }] },
+                  ]}
+                >
+                  <Text style={styles.heroStatValue}>{item.value}</Text>
+                  <Text style={styles.heroStatLabel}>{item.label}</Text>
+                </Animated.View>
+              ))}
+            </View>
+          </Animated.View>
         </View>
 
-        <View style={styles.heroCard}>
-          <View style={styles.heroPattern} />
-          <Text style={styles.heroTitle}>Play Indoor Cricket Like a Pro</Text>
-          <Text style={styles.heroSubtitle}>
-            Book premium grounds, track sessions, and unlock member rewards.
-          </Text>
+        <PromoCard item={promos[0]} featured motion={promoMotion} orbit={orbit} />
 
-          <View style={styles.heroStats}>
-            {bookingHighlights.map((item) => (
-              <View key={item.label} style={styles.heroStatChip}>
-                <Text style={styles.heroStatValue}>{item.value}</Text>
-                <Text style={styles.heroStatLabel}>{item.label}</Text>
+        <Animated.View
+          style={{
+            opacity: linksOpacity,
+            transform: [{ translateY: linksRise }],
+          }}
+        >
+          <View style={styles.quickLinksRow}>
+            {quickLinks.map((item) => (
+              <View key={item.label} style={styles.quickLinkCard}>
+                <Animated.View
+                  style={[
+                    styles.quickLinkAccent,
+                    {
+                      backgroundColor: item.accent,
+                      transform: [{ scaleX: heroGlowScale }],
+                    },
+                  ]}
+                />
+                <Text style={styles.quickLinkLabel}>{item.label}</Text>
+                <Text style={styles.quickLinkCaption}>{item.caption}</Text>
               </View>
             ))}
           </View>
+        </Animated.View>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Special for you</Text>
+          <Text style={styles.sectionAction}>View all</Text>
         </View>
-      </View>
+        <View style={styles.cardStack}>
+          {promos.slice(1).map((item) => (
+            <PromoCard
+              key={item.title}
+              item={item}
+              motion={promoMotion}
+              orbit={orbit}
+            />
+          ))}
+        </View>
 
-      <PromoCard item={promos[0]} featured />
-
-    
-
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Special for you</Text>
-        <Text style={styles.sectionAction}>View all</Text>
-      </View>
-      <View style={styles.cardStack}>
-        {promos.slice(1).map((item) => (
-          <PromoCard key={item.title} item={item} />
-        ))}
-      </View>
-
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>My teams</Text>
-        <Text style={styles.sectionAction}>Manage</Text>
-      </View>
-      <View style={styles.teamsPanel}>
-        {myTeams.map((team) => (
-          <View key={team.name} style={styles.teamRow}>
-            <View style={styles.teamAvatar}>
-              <Text style={styles.teamAvatarText}>
-                {team.name
-                  .split(' ')
-                  .map((word) => word[0])
-                  .join('')
-                  .slice(0, 2)}
-              </Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>My teams</Text>
+          <Text style={styles.sectionAction}>Manage</Text>
+        </View>
+        <View style={styles.teamsPanel}>
+          {myTeams.map((team) => (
+            <View key={team.name} style={styles.teamRow}>
+              <Animated.View
+                style={[
+                  styles.teamAvatar,
+                  {
+                    transform: [{ scale: badgeScale }],
+                  },
+                ]}
+              >
+                <Text style={styles.teamAvatarText}>
+                  {team.name
+                    .split(' ')
+                    .map((word) => word[0])
+                    .join('')
+                    .slice(0, 2)}
+                </Text>
+              </Animated.View>
+              <View style={styles.teamInfo}>
+                <Text style={styles.teamName}>{team.name}</Text>
+                <Text style={styles.teamMeta}>
+                  {team.role} . {team.members}
+                </Text>
+              </View>
+              <Text style={styles.teamArrow}>...</Text>
             </View>
-            <View style={styles.teamInfo}>
-              <Text style={styles.teamName}>{team.name}</Text>
-              <Text style={styles.teamMeta}>
-                {team.role} . {team.members}
-              </Text>
-            </View>
-            <Text style={styles.teamArrow}>...</Text>
-          </View>
-        ))}
-      </View>
+          ))}
+        </View>
 
+        <Animated.View
+          style={[
+            styles.bottomNavMock,
+            {
+              opacity: linksOpacity,
+              transform: [{ translateY: linksRise }],
+            },
+          ]}
+        >
+          <Text style={[styles.bottomNavItem, styles.bottomNavItemActive]}>
+            Home
+          </Text>
+          <Text style={styles.bottomNavItem}>Bookings</Text>
+          <Text style={styles.bottomNavItem}>Classes</Text>
+          <Text style={styles.bottomNavItem}>Teams</Text>
+          <Text style={styles.bottomNavItem}>League</Text>
+        </Animated.View>
+      </Animated.View>
     </ScrollView>
   );
 }
@@ -218,6 +487,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#26262D',
     overflow: 'hidden',
+  },
+  heroGlow: {
+    position: 'absolute',
+    top: -20,
+    right: -10,
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    backgroundColor: 'rgba(200,150,26,0.16)',
   },
   heroPattern: {
     position: 'absolute',
@@ -335,6 +613,19 @@ const styles = StyleSheet.create({
     height: 150,
     alignItems: 'center',
     justifyContent: 'flex-end',
+  },
+  orbitBall: {
+    position: 'absolute',
+    top: 12,
+    right: 34,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    shadowColor: '#FFFFFF',
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 2,
   },
   playerAura: {
     position: 'absolute',
