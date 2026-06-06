@@ -3,6 +3,7 @@ import {
   Animated,
   Easing,
   Image,
+  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +12,8 @@ import {
 import { colors, spacing } from '../theme';
 
 const logo = require('../assets/ack-logo.webp');
+const gearUpImage = require('../assets/promo-gear-up.png');
+const holidayPromoImage = require('../assets/promo-holiday-season.png');
 
 const promos = [
   {
@@ -19,6 +22,7 @@ const promos = [
     cta: 'Book Now',
     tone: '#17130A',
     accent: colors.brandGold,
+    image: gearUpImage,
   },
   {
     title: 'Holiday Season Promo',
@@ -26,6 +30,7 @@ const promos = [
     cta: 'Claim Offer',
     tone: '#241015',
     accent: colors.brandRed,
+    image: holidayPromoImage,
   },
   {
     title: 'Unlock Excellence',
@@ -86,6 +91,15 @@ function PromoCard({ item, featured = false, motion, orbit }) {
         },
       ]}
     >
+      {item.image ? (
+        <ImageBackground
+          source={item.image}
+          style={styles.promoImage}
+          imageStyle={styles.promoImageStyle}
+        >
+          <View style={styles.promoImageOverlay} />
+        </ImageBackground>
+      ) : null}
       <Animated.View
         style={[
           styles.promoGlow,
@@ -553,6 +567,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
     marginBottom: spacing.md,
+  },
+  promoImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  promoImageStyle: {
+    borderRadius: 28,
+  },
+  promoImageOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.42)',
   },
   featuredPromoCard: {
     minHeight: 225,
