@@ -42,10 +42,7 @@ const promos = [
 ];
 
 const quickLinks = [
-  { label: 'Bookings', caption: '3 active', accent: colors.brandGold },
-  { label: 'Classes', caption: '2 open', accent: colors.brandBlue },
-  { label: 'Teams', caption: '1 joined', accent: colors.brandRed },
-  { label: 'League', caption: 'Register', accent: '#6E6E73' },
+ ,
 ];
 
 const myTeams = [
@@ -62,12 +59,12 @@ const bookingHighlights = [
 function PromoCard({ item, featured = false, motion, orbit }) {
   const translateY = motion.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, featured ? -8 : -5],
+    outputRange: [0, featured ? -6 : -4],
   });
 
   const scale = motion.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, featured ? 1.02 : 1.01],
+    outputRange: [1, featured ? 1.015 : 1.008],
   });
 
   const orbitalX = orbit.interpolate({
@@ -108,27 +105,31 @@ function PromoCard({ item, featured = false, motion, orbit }) {
       />
       <View style={styles.promoPattern} />
       <View style={styles.promoContent}>
-        <Text style={styles.promoTitle}>{item.title}</Text>
+        <Text style={[styles.promoTitle, featured && styles.promoTitleFeatured]}>
+          {item.title}
+        </Text>
         <Text style={styles.promoSubtitle}>{item.subtitle}</Text>
         <Animated.View style={[styles.promoButton, { transform: [{ scale }] }]}>
           <Text style={styles.promoButtonText}>{item.cta}</Text>
         </Animated.View>
       </View>
 
-      <View style={styles.playerSilhouette}>
-        <Animated.View
-          style={[
-            styles.orbitBall,
-            {
-              backgroundColor: item.accent,
-              transform: [{ translateX: orbitalX }, { translateY: orbitalY }],
-            },
-          ]}
-        />
-        <View style={styles.playerAura} />
-        <View style={styles.playerBody} />
-        <View style={styles.playerBat} />
-      </View>
+      {!item.image ? (
+        <View style={styles.playerSilhouette}>
+          <Animated.View
+            style={[
+              styles.orbitBall,
+              {
+                backgroundColor: item.accent,
+                transform: [{ translateX: orbitalX }, { translateY: orbitalY }],
+              },
+            ]}
+          />
+          <View style={styles.playerAura} />
+          <View style={styles.playerBody} />
+          <View style={styles.playerBat} />
+        </View>
+      ) : null}
     </Animated.View>
   );
 }
@@ -281,24 +282,30 @@ export default function HomeScreen() {
       >
         <View style={styles.heroShell}>
           <View style={styles.topBar}>
-            <View style={styles.brandRow}>
-              <Image source={logo} style={styles.logo} resizeMode="contain" />
-              <View>
-                <Text style={styles.brandName}>ACK Turf</Text>
-                <Text style={styles.greeting}>Hello, good evening</Text>
+            <View style={styles.topBarLeft}>
+              <View style={styles.brandRow}>
+                <Image source={logo} style={styles.logo} resizeMode="contain" />
+                <Text style={styles.brandName}>ACK TURF</Text>
+              </View>
+              <Text style={styles.greeting}>Hello, Good Morning</Text>
+            </View>
+            <View style={styles.topBarActions}>
+              <Animated.View
+                style={[
+                  styles.notificationBubble,
+                  {
+                    transform: [{ scale: badgeScale }],
+                    opacity: pulseOpacity,
+                  },
+                ]}
+              >
+                <View style={styles.notificationBell} />
+                <View style={styles.notificationDotSmall} />
+              </Animated.View>
+              <View style={styles.avatarBubble}>
+                <Text style={styles.avatarText}>KP</Text>
               </View>
             </View>
-            <Animated.View
-              style={[
-                styles.notificationBubble,
-                {
-                  transform: [{ scale: badgeScale }],
-                  opacity: pulseOpacity,
-                },
-              ]}
-            >
-              <Text style={styles.notificationText}>3</Text>
-            </Animated.View>
           </View>
 
           <Animated.View
@@ -417,23 +424,7 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        <Animated.View
-          style={[
-            styles.bottomNavMock,
-            {
-              opacity: linksOpacity,
-              transform: [{ translateY: linksRise }],
-            },
-          ]}
-        >
-          <Text style={[styles.bottomNavItem, styles.bottomNavItemActive]}>
-            Home
-          </Text>
-          <Text style={styles.bottomNavItem}>Bookings</Text>
-          <Text style={styles.bottomNavItem}>Classes</Text>
-          <Text style={styles.bottomNavItem}>Teams</Text>
-          <Text style={styles.bottomNavItem}>League</Text>
-        </Animated.View>
+        
       </Animated.View>
     </ScrollView>
   );
@@ -454,8 +445,11 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: spacing.lg,
+  },
+  topBarLeft: {
+    flex: 1,
   },
   brandRow: {
     flexDirection: 'row',
@@ -463,34 +457,73 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   logo: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: 42,
+    height: 42,
+    borderRadius: 12,
     backgroundColor: colors.surface,
   },
   brandName: {
     color: colors.surface,
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '800',
     textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   greeting: {
-    color: '#A8ACB3',
-    fontSize: 13,
-    marginTop: 2,
+    color: '#E5E7EB',
+    fontSize: 15,
+    fontWeight: '500',
+    marginTop: spacing.md,
+  },
+  topBarActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingTop: 2,
   },
   notificationBubble: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#18181B',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#1A1A1F',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#2A2A30',
+    position: 'relative',
   },
-  notificationText: {
-    color: colors.brandGold,
+  notificationBell: {
+    width: 14,
+    height: 14,
+    borderTopLeftRadius: 7,
+    borderTopRightRadius: 7,
+    borderBottomLeftRadius: 4,
+    borderBottomRightRadius: 4,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    borderBottomWidth: 1.5,
+  },
+  notificationDotSmall: {
+    position: 'absolute',
+    top: 9,
+    right: 10,
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    backgroundColor: colors.brandGold,
+  },
+  avatarBubble: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2A2A30',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#3A3A44',
+  },
+  avatarText: {
+    color: colors.surface,
     fontSize: 13,
     fontWeight: '800',
   },
@@ -560,9 +593,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   promoCard: {
-    minHeight: 190,
-    borderRadius: 28,
-    padding: spacing.lg,
+    minHeight: 142,
+    borderRadius: 22,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
@@ -572,14 +606,14 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   promoImageStyle: {
-    borderRadius: 28,
+    borderRadius: 22,
   },
   promoImageOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.42)',
   },
   featuredPromoCard: {
-    minHeight: 225,
+    minHeight: 156,
   },
   promoGlow: {
     position: 'absolute',
@@ -600,33 +634,36 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   promoContent: {
-    maxWidth: '62%',
+    maxWidth: '58%',
     zIndex: 2,
   },
   promoTitle: {
     color: colors.surface,
-    fontSize: 28,
+    fontSize: 18,
     fontWeight: '900',
-    lineHeight: 31,
-    textTransform: 'uppercase',
+    lineHeight: 21,
+  },
+  promoTitleFeatured: {
+    fontSize: 20,
+    lineHeight: 23,
   },
   promoSubtitle: {
     color: '#D8DADF',
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: spacing.sm,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: spacing.xs,
   },
   promoButton: {
     alignSelf: 'flex-start',
     backgroundColor: colors.surface,
     borderRadius: 999,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    marginTop: spacing.lg,
+    paddingVertical: 7,
+    marginTop: spacing.md,
   },
   promoButtonText: {
     color: colors.brandBlack,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
   },
   playerSilhouette: {
@@ -726,6 +763,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cardStack: {
+    gap: spacing.sm,
     marginBottom: spacing.xl,
   },
   teamsPanel: {
