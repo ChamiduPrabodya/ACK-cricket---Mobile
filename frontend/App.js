@@ -1,9 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  Image,
-  Pressable,
-  StyleSheet,
+ StyleSheet,
   Text,
   View,
 } from 'react-native';
