@@ -44,13 +44,6 @@ const promos = [
 
 ];
 
-const quickLinks = [
-  { label: 'Bookings', caption: '3 active', accent: colors.brandGold },
-  { label: 'Classes', caption: '2 open', accent: colors.brandBlue },
-  { label: 'Teams', caption: '1 joined', accent: colors.brandRed },
-  { label: 'League', caption: 'Register', accent: '#6E6E73' },
-];
-
 const myTeams = [
   { name: 'Diamond Team', role: 'Captain', members: '11 players' },
   { name: 'ACK Warriors', role: 'Member', members: '14 players' },
