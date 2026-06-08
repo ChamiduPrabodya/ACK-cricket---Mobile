@@ -21,7 +21,7 @@ const promos = [
     subtitle: 'Secure your evening slot in just a few taps.',
     cta: 'Book Now',
     tone: '#17130A',
-    accent: colors.brandGold,
+
     image: gearUpImage,
   },
   {
@@ -32,17 +32,7 @@ const promos = [
     accent: colors.brandRed,
     image: holidayPromoImage,
   },
-  {
-    title: 'Unlock Excellence',
-    subtitle: 'Join premium membership and earn priority benefits.',
-    cta: 'Get Membership',
-    tone: '#10131F',
-    accent: colors.brandBlue,
-  },
-];
 
-const quickLinks = [
- ,
 ];
 
 const myTeams = [
