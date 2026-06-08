@@ -1,4 +1,14 @@
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { formatDiscount } from '../services/promotionRules';
 import { colors, spacing } from '../theme';
 
 const logo = require('../assets/ack-logo.webp');
@@ -50,6 +60,31 @@ const reports = [
   'Promotions increased repeat bookings by 11% this month.',
 ];
 
+const applyOptions = [
+  { label: 'All slots', value: 'all' },
+  { label: 'Peak hours', value: 'peak' },
+  { label: 'Off-peak', value: 'offPeak' },
+];
+
+const campaignOptions = [
+  { label: 'Standard', value: 'standard' },
+  { label: 'First-time', value: 'firstTime' },
+  { label: 'Weekend', value: 'weekend' },
+  { label: 'Seasonal', value: 'seasonal' },
+];
+
+const defaultForm = {
+  title: '',
+  code: '',
+  discountType: 'percentage',
+  discountValue: '',
+  validFrom: '2026-06-01',
+  validUntil: '2026-12-31',
+  appliesTo: 'all',
+  campaignType: 'standard',
+  description: '',
+};
+
 function SectionTitle({ eyebrow, title, caption }) {
   return (
     <View style={styles.sectionHeader}>
@@ -60,7 +95,30 @@ function SectionTitle({ eyebrow, title, caption }) {
   );
 }
 
-export default function AdminDashboardScreen() {
+export default function AdminDashboardScreen({ promotions, onCreatePromotion }) {
+  const [form, setForm] = useState(defaultForm);
+  const [formMessage, setFormMessage] = useState('');
+
+  const updateForm = (field, value) => {
+    setForm((currentForm) => ({ ...currentForm, [field]: value }));
+  };
+
+  const handleCreateOffer = () => {
+    if (!form.title.trim() || !form.code.trim() || !form.discountValue) {
+      setFormMessage('Add a title, promo code, and discount value.');
+      return;
+    }
+
+    onCreatePromotion({
+      ...form,
+      description:
+        form.description ||
+        `${form.code.toUpperCase()} applies to ${form.appliesTo === 'all' ? 'all time slots' : form.appliesTo}.`,
+    });
+    setForm(defaultForm);
+    setFormMessage('Offer created and visible to users.');
+  };
+
   return (
     <ScrollView
       style={styles.screen}
@@ -147,16 +205,154 @@ export default function AdminDashboardScreen() {
 
       <SectionTitle
         eyebrow="Promotions"
-        title="Campaign watch"
-        caption="Track how current offers are influencing demand."
+        title="Create discount offer"
+        caption="Configure promo codes, validity dates, time-slot targeting, and advanced campaigns."
       />
+      <View style={styles.offerBuilder}>
+        <View style={styles.formRow}>
+          <TextInput
+            value={form.title}
+            onChangeText={(value) => updateForm('title', value)}
+            placeholder="Offer title"
+            placeholderTextColor="#8D9198"
+            style={styles.input}
+          />
+          <TextInput
+            value={form.code}
+            onChangeText={(value) => updateForm('code', value.toUpperCase())}
+            placeholder="CRICKET10"
+            placeholderTextColor="#8D9198"
+            autoCapitalize="characters"
+            style={styles.input}
+          />
+        </View>
+
+        <View style={styles.segmentRow}>
+          {['percentage', 'fixed'].map((type) => (
+            <Pressable
+              key={type}
+              onPress={() => updateForm('discountType', type)}
+              style={[
+                styles.segmentPill,
+                form.discountType === type && styles.segmentPillActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.segmentText,
+                  form.discountType === type && styles.segmentTextActive,
+                ]}
+              >
+                {type === 'percentage' ? 'Percentage' : 'Fixed LKR'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <TextInput
+          value={form.discountValue}
+          onChangeText={(value) => updateForm('discountValue', value)}
+          placeholder={form.discountType === 'percentage' ? 'Discount %' : 'Discount amount'}
+          placeholderTextColor="#8D9198"
+          keyboardType="numeric"
+          style={styles.input}
+        />
+
+        <View style={styles.formRow}>
+          <TextInput
+            value={form.validFrom}
+            onChangeText={(value) => updateForm('validFrom', value)}
+            placeholder="Valid from"
+            placeholderTextColor="#8D9198"
+            style={styles.input}
+          />
+          <TextInput
+            value={form.validUntil}
+            onChangeText={(value) => updateForm('validUntil', value)}
+            placeholder="Valid until"
+            placeholderTextColor="#8D9198"
+            style={styles.input}
+          />
+        </View>
+
+        <Text style={styles.optionLabel}>Apply to</Text>
+        <View style={styles.chipWrap}>
+          {applyOptions.map((option) => (
+            <Pressable
+              key={option.value}
+              onPress={() => updateForm('appliesTo', option.value)}
+              style={[
+                styles.optionChip,
+                form.appliesTo === option.value && styles.optionChipActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.optionChipText,
+                  form.appliesTo === option.value && styles.optionChipTextActive,
+                ]}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <Text style={styles.optionLabel}>Campaign type</Text>
+        <View style={styles.chipWrap}>
+          {campaignOptions.map((option) => (
+            <Pressable
+              key={option.value}
+              onPress={() => updateForm('campaignType', option.value)}
+              style={[
+                styles.optionChip,
+                form.campaignType === option.value && styles.optionChipActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.optionChipText,
+                  form.campaignType === option.value && styles.optionChipTextActive,
+                ]}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <TextInput
+          value={form.description}
+          onChangeText={(value) => updateForm('description', value)}
+          placeholder="Short offer description"
+          placeholderTextColor="#8D9198"
+          style={styles.input}
+        />
+
+        <Pressable onPress={handleCreateOffer} style={styles.createButton}>
+          <Text style={styles.createButtonText}>Create offer</Text>
+        </Pressable>
+        {formMessage ? <Text style={styles.formMessage}>{formMessage}</Text> : null}
+      </View>
+
       <View style={styles.promoPanel}>
-        <Text style={styles.promoHeading}>June Power Play Campaign</Text>
-        <Text style={styles.promoStat}>126 redemptions this month</Text>
-        <Text style={styles.promoDescription}>
-          Highest traction is coming from weekday team sessions and repeat
-          customers booking after 5 PM.
-        </Text>
+        <Text style={styles.promoHeading}>Active offers</Text>
+        <Text style={styles.promoStat}>{promotions.length} campaigns configured</Text>
+        <View style={styles.offerList}>
+          {promotions.map((promotion) => (
+            <View key={promotion.id} style={styles.offerRow}>
+              <View style={styles.offerIdentity}>
+                <Text style={styles.offerCode}>{promotion.code}</Text>
+                <Text style={styles.offerMeta}>
+                  {formatDiscount(promotion)} . {promotion.appliesTo} . {promotion.campaignType}
+                </Text>
+              </View>
+              <Text style={styles.offerDates}>
+                {promotion.validFrom} to {promotion.validUntil}
+              </Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       <SectionTitle
@@ -407,6 +603,134 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     marginTop: spacing.sm,
+  },
+  offerBuilder: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.md,
+    gap: spacing.sm,
+  },
+  formRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  input: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
+    color: colors.text,
+    paddingHorizontal: spacing.md,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  segmentRow: {
+    flexDirection: 'row',
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: 16,
+    padding: 4,
+    gap: spacing.xs,
+  },
+  segmentPill: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+  },
+  segmentPillActive: {
+    backgroundColor: colors.brandGold,
+  },
+  segmentText: {
+    color: colors.mutedText,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  segmentTextActive: {
+    color: colors.brandBlack,
+  },
+  optionLabel: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: spacing.xs,
+  },
+  chipWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  optionChip: {
+    borderRadius: 999,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  optionChipActive: {
+    backgroundColor: '#F4E4B5',
+    borderColor: colors.brandGold,
+  },
+  optionChipText: {
+    color: colors.mutedText,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  optionChipTextActive: {
+    color: colors.brandBlack,
+  },
+  createButton: {
+    minHeight: 48,
+    borderRadius: 16,
+    backgroundColor: colors.brandRed,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.xs,
+  },
+  createButtonText: {
+    color: colors.surface,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  formMessage: {
+    color: colors.brandBlue,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  offerList: {
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  offerRow: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: '#EAC66B',
+  },
+  offerIdentity: {
+    marginBottom: spacing.xs,
+  },
+  offerCode: {
+    color: colors.brandRed,
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  offerMeta: {
+    color: '#6A5314',
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  offerDates: {
+    color: colors.mutedText,
+    fontSize: 12,
+    fontWeight: '700',
   },
   reportCard: {
     backgroundColor: colors.surface,
