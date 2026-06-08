@@ -55,6 +55,29 @@ const bookingHighlights = [
   { label: 'Offers', value: '05' },
 ];
 
+const quickLinks = [
+  {
+    label: 'Book Turf',
+    caption: 'Reserve your next indoor session',
+    accent: colors.brandGold,
+  },
+  {
+    label: 'My Bookings',
+    caption: 'Review upcoming matches',
+    accent: colors.brandRed,
+  },
+  {
+    label: 'Teams',
+    caption: 'Manage squads and players',
+    accent: colors.brandBlue,
+  },
+  {
+    label: 'Rewards',
+    caption: 'Use points and active offers',
+    accent: colors.success,
+  },
+];
+
 function PromoCard({ item, featured = false, motion, orbit }) {
   const translateY = motion.interpolate({
     inputRange: [0, 1],
