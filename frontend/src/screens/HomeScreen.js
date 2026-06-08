@@ -1,14 +1,23 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
   Image,
   ImageBackground,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
+import {
+  calculatePromotionQuote,
+  canApplyPromotion,
+  formatDiscount,
+  getSlotType,
+  isPromotionActive,
+} from '../services/promotionRules';
 import { colors, spacing } from '../theme';
 
 const logo = require('../assets/ack-logo.webp');
@@ -51,6 +60,29 @@ const bookingHighlights = [
   { label: 'Upcoming', value: '03' },
   { label: 'Points', value: '240' },
   { label: 'Offers', value: '05' },
+];
+
+const quickLinks = [
+  {
+    label: 'Book Turf',
+    caption: 'Reserve your next indoor session',
+    accent: colors.brandGold,
+  },
+  {
+    label: 'My Bookings',
+    caption: 'Review upcoming matches',
+    accent: colors.brandRed,
+  },
+  {
+    label: 'Teams',
+    caption: 'Manage squads and players',
+    accent: colors.brandBlue,
+  },
+  {
+    label: 'Rewards',
+    caption: 'Use points and active offers',
+    accent: colors.success,
+  },
 ];
 
 function PromoCard({ item, featured = false, motion, orbit }) {
@@ -131,7 +163,10 @@ function PromoCard({ item, featured = false, motion, orbit }) {
   );
 }
 
-export default function HomeScreen() {
+export default function HomeScreen({ promotions }) {
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedQuote, setAppliedQuote] = useState(null);
+  const [promoMessage, setPromoMessage] = useState('');
   const entrance = useRef(new Animated.Value(0)).current;
   const heroDrift = useRef(new Animated.Value(0)).current;
   const pulse = useRef(new Animated.Value(0)).current;
@@ -265,6 +300,46 @@ export default function HomeScreen() {
     outputRange: [0.55, 1],
   });
 
+  const bookingPreview = {
+    basePrice: 4500,
+    bookingDate: '2026-06-13',
+    slotTime: '18:00',
+    slotType: getSlotType('18:00'),
+    isFirstTimeUser: true,
+  };
+
+  const activePromotions = useMemo(
+    () =>
+      promotions.filter((promotion) =>
+        isPromotionActive(promotion, bookingPreview.bookingDate)
+      ),
+    [promotions]
+  );
+
+  const handleApplyPromo = (code = promoCode) => {
+    const normalizedCode = code.trim().toUpperCase();
+    const promotion = promotions.find((item) => item.code === normalizedCode);
+
+    if (!promotion) {
+      setAppliedQuote(null);
+      setPromoMessage('Promo code was not found.');
+      return;
+    }
+
+    const result = canApplyPromotion(promotion, bookingPreview);
+
+    if (!result.allowed) {
+      setAppliedQuote(null);
+      setPromoMessage(result.message);
+      return;
+    }
+
+    const quote = calculatePromotionQuote(promotion, bookingPreview.basePrice);
+    setPromoCode(normalizedCode);
+    setAppliedQuote({ ...quote, promotion });
+    setPromoMessage(result.message);
+  };
+
   return (
     <ScrollView
       style={styles.screen}
@@ -376,6 +451,23 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>Special for you</Text>
           <Text style={styles.sectionAction}>View all</Text>
         </View>
+        <View style={styles.activeOfferStack}>
+          {activePromotions.map((promotion) => (
+            <Pressable
+              key={promotion.id}
+              onPress={() => handleApplyPromo(promotion.code)}
+              style={styles.activeOfferCard}
+            >
+              <View>
+                <Text style={styles.activeOfferCode}>{promotion.code}</Text>
+                <Text style={styles.activeOfferMeta}>
+                  {formatDiscount(promotion)} . {promotion.appliesTo} . {promotion.campaignType}
+                </Text>
+              </View>
+              <Text style={styles.activeOfferApply}>Apply</Text>
+            </Pressable>
+          ))}
+        </View>
         <View style={styles.cardStack}>
           {promos.slice(1).map((item) => (
             <PromoCard
@@ -385,6 +477,50 @@ export default function HomeScreen() {
               orbit={orbit}
             />
           ))}
+        </View>
+
+        <View style={styles.bookingPreview}>
+          <View style={styles.bookingHeader}>
+            <View>
+              <Text style={styles.bookingEyebrow}>Booking preview</Text>
+              <Text style={styles.bookingTitle}>Saturday 6:00 PM slot</Text>
+            </View>
+            <View style={styles.slotTypePill}>
+              <Text style={styles.slotTypeText}>Peak</Text>
+            </View>
+          </View>
+
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>Base price</Text>
+            <Text style={styles.priceValue}>LKR {bookingPreview.basePrice}</Text>
+          </View>
+          <View style={styles.priceRow}>
+            <Text style={styles.priceLabel}>Discount</Text>
+            <Text style={styles.discountValue}>
+              LKR {appliedQuote ? appliedQuote.discountAmount : 0}
+            </Text>
+          </View>
+          <View style={styles.finalPriceRow}>
+            <Text style={styles.finalPriceLabel}>Price before confirming</Text>
+            <Text style={styles.finalPriceValue}>
+              LKR {appliedQuote ? appliedQuote.finalPrice : bookingPreview.basePrice}
+            </Text>
+          </View>
+
+          <View style={styles.promoInputRow}>
+            <TextInput
+              value={promoCode}
+              onChangeText={(value) => setPromoCode(value.toUpperCase())}
+              placeholder="Enter promo code"
+              placeholderTextColor="#777B84"
+              autoCapitalize="characters"
+              style={styles.promoInput}
+            />
+            <Pressable onPress={() => handleApplyPromo()} style={styles.applyButton}>
+              <Text style={styles.applyButtonText}>Apply</Text>
+            </Pressable>
+          </View>
+          {promoMessage ? <Text style={styles.promoMessage}>{promoMessage}</Text> : null}
         </View>
 
         <View style={styles.sectionHeader}>
@@ -762,6 +898,150 @@ const styles = StyleSheet.create({
   cardStack: {
     gap: spacing.sm,
     marginBottom: spacing.xl,
+  },
+  activeOfferStack: {
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  activeOfferCard: {
+    minHeight: 70,
+    borderRadius: 18,
+    backgroundColor: '#F7F2E7',
+    borderWidth: 1,
+    borderColor: '#C8961A',
+    padding: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  activeOfferCode: {
+    color: colors.brandRed,
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  activeOfferMeta: {
+    color: '#675A35',
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: spacing.xs,
+  },
+  activeOfferApply: {
+    color: colors.brandBlue,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  bookingPreview: {
+    backgroundColor: '#F7F2E7',
+    borderRadius: 28,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: '#DDCDA5',
+    marginBottom: spacing.xl,
+  },
+  bookingHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  bookingEyebrow: {
+    color: colors.brandRed,
+    fontSize: 12,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+  },
+  bookingTitle: {
+    color: colors.text,
+    fontSize: 19,
+    fontWeight: '900',
+    marginTop: spacing.xs,
+  },
+  slotTypePill: {
+    borderRadius: 999,
+    backgroundColor: colors.brandBlack,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  slotTypeText: {
+    color: colors.brandGold,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2D7B9',
+  },
+  priceLabel: {
+    color: colors.mutedText,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  priceValue: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  discountValue: {
+    color: colors.success,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  finalPriceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+  },
+  finalPriceLabel: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '900',
+    flex: 1,
+  },
+  finalPriceValue: {
+    color: colors.brandRed,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  promoInputRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  promoInput: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: '#D7C9A3',
+    color: colors.text,
+    paddingHorizontal: spacing.md,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  applyButton: {
+    minHeight: 48,
+    borderRadius: 16,
+    backgroundColor: colors.brandRed,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  applyButtonText: {
+    color: colors.surface,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  promoMessage: {
+    color: colors.brandBlue,
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: spacing.sm,
   },
   teamsPanel: {
     backgroundColor: '#F7F2E7',

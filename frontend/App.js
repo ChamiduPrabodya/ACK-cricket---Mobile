@@ -1,8 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Image,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -10,12 +10,27 @@ import {
 import { useState } from 'react';
 import AdminDashboardScreen from './src/screens/AdminDashboardScreen';
 import HomeScreen from './src/screens/HomeScreen';
+import { initialPromotions } from './src/services/promotionRules';
 import { colors, spacing } from './src/theme';
 
 const logo = require('./src/assets/ack-logo.webp');
 
 export default function App() {
   const [activeRole, setActiveRole] = useState('user');
+  const [promotions, setPromotions] = useState(initialPromotions);
+
+  const handleCreatePromotion = (promotion) => {
+    setPromotions((currentPromotions) => [
+      {
+        ...promotion,
+        id: `promo-${Date.now()}`,
+        code: promotion.code.trim().toUpperCase(),
+        discountValue: Number(promotion.discountValue),
+        isActive: true,
+      },
+      ...currentPromotions,
+    ]);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -68,7 +83,14 @@ export default function App() {
       </View>
 
       <View style={styles.content}>
-        {activeRole === 'admin' ? <AdminDashboardScreen /> : <HomeScreen />}
+        {activeRole === 'admin' ? (
+          <AdminDashboardScreen
+            promotions={promotions}
+            onCreatePromotion={handleCreatePromotion}
+          />
+        ) : (
+          <HomeScreen promotions={promotions} />
+        )}
       </View>
     </SafeAreaView>
   );
