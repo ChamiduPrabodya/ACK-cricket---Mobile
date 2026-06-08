@@ -96,6 +96,7 @@ function SectionTitle({ eyebrow, title, caption }) {
 }
 
 export default function AdminDashboardScreen({ promotions, onCreatePromotion }) {
+  const [activePage, setActivePage] = useState('dashboard');
   const [form, setForm] = useState(defaultForm);
   const [formMessage, setFormMessage] = useState('');
 
@@ -118,6 +119,164 @@ export default function AdminDashboardScreen({ promotions, onCreatePromotion }) 
     setForm(defaultForm);
     setFormMessage('Offer created and visible to users.');
   };
+
+  if (activePage === 'promotionCreate') {
+    return (
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.pageHeader}>
+          <Pressable
+            onPress={() => setActivePage('dashboard')}
+            style={styles.backButton}
+          >
+            <Text style={styles.backButtonText}>Back</Text>
+          </Pressable>
+          <View style={styles.pageTitleBlock}>
+            <Text style={styles.eyebrow}>Promotions</Text>
+            <Text style={styles.sectionTitle}>Add new promotion</Text>
+            <Text style={styles.sectionCaption}>
+              Add every campaign detail in one place before publishing it to users.
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.offerBuilder}>
+          <Text style={styles.formCardTitle}>Promotion details</Text>
+          <Text style={styles.formCardCaption}>
+            Configure promo code, discount, validity dates, slot targeting, and campaign type.
+          </Text>
+
+          <View style={styles.formRow}>
+            <TextInput
+              value={form.title}
+              onChangeText={(value) => updateForm('title', value)}
+              placeholder="Offer title"
+              placeholderTextColor="#8D9198"
+              style={styles.input}
+            />
+            <TextInput
+              value={form.code}
+              onChangeText={(value) => updateForm('code', value.toUpperCase())}
+              placeholder="CRICKET10"
+              placeholderTextColor="#8D9198"
+              autoCapitalize="characters"
+              style={styles.input}
+            />
+          </View>
+
+          <View style={styles.segmentRow}>
+            {['percentage', 'fixed'].map((type) => (
+              <Pressable
+                key={type}
+                onPress={() => updateForm('discountType', type)}
+                style={[
+                  styles.segmentPill,
+                  form.discountType === type && styles.segmentPillActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    form.discountType === type && styles.segmentTextActive,
+                  ]}
+                >
+                  {type === 'percentage' ? 'Percentage' : 'Fixed LKR'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <TextInput
+            value={form.discountValue}
+            onChangeText={(value) => updateForm('discountValue', value)}
+            placeholder={form.discountType === 'percentage' ? 'Discount %' : 'Discount amount'}
+            placeholderTextColor="#8D9198"
+            keyboardType="numeric"
+            style={styles.input}
+          />
+
+          <View style={styles.formRow}>
+            <TextInput
+              value={form.validFrom}
+              onChangeText={(value) => updateForm('validFrom', value)}
+              placeholder="Valid from"
+              placeholderTextColor="#8D9198"
+              style={styles.input}
+            />
+            <TextInput
+              value={form.validUntil}
+              onChangeText={(value) => updateForm('validUntil', value)}
+              placeholder="Valid until"
+              placeholderTextColor="#8D9198"
+              style={styles.input}
+            />
+          </View>
+
+          <Text style={styles.optionLabel}>Apply to</Text>
+          <View style={styles.chipWrap}>
+            {applyOptions.map((option) => (
+              <Pressable
+                key={option.value}
+                onPress={() => updateForm('appliesTo', option.value)}
+                style={[
+                  styles.optionChip,
+                  form.appliesTo === option.value && styles.optionChipActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.optionChipText,
+                    form.appliesTo === option.value && styles.optionChipTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={styles.optionLabel}>Campaign type</Text>
+          <View style={styles.chipWrap}>
+            {campaignOptions.map((option) => (
+              <Pressable
+                key={option.value}
+                onPress={() => updateForm('campaignType', option.value)}
+                style={[
+                  styles.optionChip,
+                  form.campaignType === option.value && styles.optionChipActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.optionChipText,
+                    form.campaignType === option.value && styles.optionChipTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <TextInput
+            value={form.description}
+            onChangeText={(value) => updateForm('description', value)}
+            placeholder="Short offer description"
+            placeholderTextColor="#8D9198"
+            style={styles.input}
+          />
+
+          <Pressable onPress={handleCreateOffer} style={styles.createButton}>
+            <Text style={styles.createButtonText}>Create offer</Text>
+          </Pressable>
+          {formMessage ? <Text style={styles.formMessage}>{formMessage}</Text> : null}
+        </View>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView
@@ -205,139 +364,24 @@ export default function AdminDashboardScreen({ promotions, onCreatePromotion }) 
 
       <SectionTitle
         eyebrow="Promotions"
-        title="Create discount offer"
-        caption="Configure promo codes, validity dates, time-slot targeting, and advanced campaigns."
+        title="Promotion management"
+        caption="Review active campaigns or open the promotion page to add a new offer."
       />
-      <View style={styles.offerBuilder}>
-        <View style={styles.formRow}>
-          <TextInput
-            value={form.title}
-            onChangeText={(value) => updateForm('title', value)}
-            placeholder="Offer title"
-            placeholderTextColor="#8D9198"
-            style={styles.input}
-          />
-          <TextInput
-            value={form.code}
-            onChangeText={(value) => updateForm('code', value.toUpperCase())}
-            placeholder="CRICKET10"
-            placeholderTextColor="#8D9198"
-            autoCapitalize="characters"
-            style={styles.input}
-          />
-        </View>
-
-        <View style={styles.segmentRow}>
-          {['percentage', 'fixed'].map((type) => (
-            <Pressable
-              key={type}
-              onPress={() => updateForm('discountType', type)}
-              style={[
-                styles.segmentPill,
-                form.discountType === type && styles.segmentPillActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.segmentText,
-                  form.discountType === type && styles.segmentTextActive,
-                ]}
-              >
-                {type === 'percentage' ? 'Percentage' : 'Fixed LKR'}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <TextInput
-          value={form.discountValue}
-          onChangeText={(value) => updateForm('discountValue', value)}
-          placeholder={form.discountType === 'percentage' ? 'Discount %' : 'Discount amount'}
-          placeholderTextColor="#8D9198"
-          keyboardType="numeric"
-          style={styles.input}
-        />
-
-        <View style={styles.formRow}>
-          <TextInput
-            value={form.validFrom}
-            onChangeText={(value) => updateForm('validFrom', value)}
-            placeholder="Valid from"
-            placeholderTextColor="#8D9198"
-            style={styles.input}
-          />
-          <TextInput
-            value={form.validUntil}
-            onChangeText={(value) => updateForm('validUntil', value)}
-            placeholder="Valid until"
-            placeholderTextColor="#8D9198"
-            style={styles.input}
-          />
-        </View>
-
-        <Text style={styles.optionLabel}>Apply to</Text>
-        <View style={styles.chipWrap}>
-          {applyOptions.map((option) => (
-            <Pressable
-              key={option.value}
-              onPress={() => updateForm('appliesTo', option.value)}
-              style={[
-                styles.optionChip,
-                form.appliesTo === option.value && styles.optionChipActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.optionChipText,
-                  form.appliesTo === option.value && styles.optionChipTextActive,
-                ]}
-              >
-                {option.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <Text style={styles.optionLabel}>Campaign type</Text>
-        <View style={styles.chipWrap}>
-          {campaignOptions.map((option) => (
-            <Pressable
-              key={option.value}
-              onPress={() => updateForm('campaignType', option.value)}
-              style={[
-                styles.optionChip,
-                form.campaignType === option.value && styles.optionChipActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.optionChipText,
-                  form.campaignType === option.value && styles.optionChipTextActive,
-                ]}
-              >
-                {option.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <TextInput
-          value={form.description}
-          onChangeText={(value) => updateForm('description', value)}
-          placeholder="Short offer description"
-          placeholderTextColor="#8D9198"
-          style={styles.input}
-        />
-
-        <Pressable onPress={handleCreateOffer} style={styles.createButton}>
-          <Text style={styles.createButtonText}>Create offer</Text>
-        </Pressable>
-        {formMessage ? <Text style={styles.formMessage}>{formMessage}</Text> : null}
-      </View>
-
       <View style={styles.promoPanel}>
         <Text style={styles.promoHeading}>Active offers</Text>
         <Text style={styles.promoStat}>{promotions.length} campaigns configured</Text>
+        <Text style={styles.promoDescription}>
+          Add a new promotion from the dedicated page so dashboard operations stay easy to scan.
+        </Text>
+        <Pressable
+          onPress={() => {
+            setFormMessage('');
+            setActivePage('promotionCreate');
+          }}
+          style={styles.addPromotionButton}
+        >
+          <Text style={styles.addPromotionButtonText}>Add promotion</Text>
+        </Pressable>
         <View style={styles.offerList}>
           {promotions.map((promotion) => (
             <View key={promotion.id} style={styles.offerRow}>
@@ -379,6 +423,31 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     paddingBottom: spacing.xxl,
+  },
+  pageHeader: {
+    marginBottom: spacing.lg,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    minHeight: 40,
+    borderRadius: 999,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: colors.brandBlack,
+    justifyContent: 'center',
+    marginBottom: spacing.md,
+  },
+  backButtonText: {
+    color: colors.surface,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  pageTitleBlock: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   hero: {
     backgroundColor: colors.brandBlack,
@@ -604,14 +673,38 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginTop: spacing.sm,
   },
+  addPromotionButton: {
+    minHeight: 48,
+    borderRadius: 16,
+    backgroundColor: colors.brandRed,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.md,
+  },
+  addPromotionButtonText: {
+    color: colors.surface,
+    fontSize: 15,
+    fontWeight: '900',
+  },
   offerBuilder: {
     backgroundColor: colors.surface,
     borderRadius: 24,
     padding: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: spacing.md,
+    marginBottom: spacing.xl,
     gap: spacing.sm,
+  },
+  formCardTitle: {
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  formCardCaption: {
+    color: colors.mutedText,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: spacing.xs,
   },
   formRow: {
     flexDirection: 'row',
