@@ -36,49 +36,48 @@ export default function App() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" />
       <View style={styles.header}>
-        <View style={styles.brandRow}>
-          <Image source={logo} style={styles.logo} resizeMode="contain" />
-          <View style={styles.brandBlock}>
-            <Text style={styles.brandTitle}>ACK Indoor Cricket</Text>
-            <Text style={styles.brandSubtitle}>
-              Branded frontend preview for user and admin dashboards
-            </Text>
+        <View style={styles.headerContent}>
+          <View style={styles.brandRow}>
+            <Image source={logo} style={styles.logo} resizeMode="contain" />
+            <View style={styles.brandBlock}>
+              <Text style={styles.brandTitle}>ACK Indoor Cricket</Text>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.switcher}>
-          <Pressable
-            onPress={() => setActiveRole('user')}
-            style={[
-              styles.switchPill,
-              activeRole === 'user' && styles.switchPillActive,
-            ]}
-          >
-            <Text
+          <View style={styles.switcher}>
+            <Pressable
+              onPress={() => setActiveRole('user')}
               style={[
-                styles.switchText,
-                activeRole === 'user' && styles.switchTextActive,
+                styles.switchPill,
+                activeRole === 'user' && styles.switchPillActive,
               ]}
             >
-              User
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setActiveRole('admin')}
-            style={[
-              styles.switchPill,
-              activeRole === 'admin' && styles.switchPillActive,
-            ]}
-          >
-            <Text
+              <Text
+                style={[
+                  styles.switchText,
+                  activeRole === 'user' && styles.switchTextActive,
+                ]}
+              >
+                User
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setActiveRole('admin')}
               style={[
-                styles.switchText,
-                activeRole === 'admin' && styles.switchTextActive,
+                styles.switchPill,
+                activeRole === 'admin' && styles.switchPillActive,
               ]}
             >
-              Admin
-            </Text>
-          </Pressable>
+              <Text
+                style={[
+                  styles.switchText,
+                  activeRole === 'admin' && styles.switchTextActive,
+                ]}
+              >
+                Admin
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
 
@@ -107,6 +106,10 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     backgroundColor: colors.brandBlack,
   },
+  headerContent: {
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -120,17 +123,14 @@ const styles = StyleSheet.create({
   },
   brandBlock: {
     flex: 1,
-    marginBottom: spacing.md,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   brandTitle: {
     color: colors.surface,
     fontSize: 23,
     fontWeight: '800',
-  },
-  brandSubtitle: {
-    color: '#C7CBD4',
-    fontSize: 14,
-    marginTop: spacing.xs,
+    textAlign: 'left',
   },
   switcher: {
     flexDirection: 'row',
@@ -139,6 +139,7 @@ const styles = StyleSheet.create({
     padding: 4,
     gap: spacing.xs,
     alignSelf: 'flex-start',
+    marginLeft: 68 + spacing.md,
     borderWidth: 1,
     borderColor: '#27272A',
   },
