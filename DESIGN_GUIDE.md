@@ -43,6 +43,22 @@ Color values should be managed through `frontend/src/theme/`. The palette should
 | Warning color | Pending bookings, unpaid payment status, reminders, and attention states |
 | Error color | Cancelled bookings, failed payments, invalid forms, and destructive actions |
 
+Current shared palette:
+
+- Primary: `#9E1228`
+- Primary dark: `#080808`
+- Secondary: `#C8961A`
+- Accent blue: `#1F2F86`
+- Background: `#F3F4F6`
+- Surface: `#FFFFFF`
+- Surface muted: `#F8F5EF`
+- Text: `#111111`
+- Muted text: `#61646B`
+- Border: `#DDDDE3`
+- Success: `#1D7A4E`
+- Warning: `#C8961A`
+- Danger: `#9E1228`
+
 ### Color Rules
 
 - Use the primary color for the main action on each screen.

@@ -1,8 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import {
-  Image,
-  Pressable,
-  SafeAreaView,
+
   StyleSheet,
   Text,
   View,

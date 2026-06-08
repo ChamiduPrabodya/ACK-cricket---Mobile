@@ -21,7 +21,7 @@ const promos = [
     subtitle: 'Secure your evening slot in just a few taps.',
     cta: 'Book Now',
     tone: '#17130A',
-    
+
     image: gearUpImage,
   },
   {
@@ -32,13 +32,7 @@ const promos = [
     accent: colors.brandRed,
     image: holidayPromoImage,
   },
-];
 
-const quickLinks = [
-  { label: 'Bookings', caption: '3 active', accent: colors.brandGold },
-  { label: 'Classes', caption: '2 open', accent: colors.brandBlue },
-  { label: 'Teams', caption: '1 joined', accent: colors.brandRed },
-  { label: 'League', caption: 'Register', accent: '#6E6E73' },
 ];
 
 const myTeams = [
