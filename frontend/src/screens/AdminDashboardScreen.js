@@ -105,8 +105,17 @@ export default function AdminDashboardScreen({ promotions, onCreatePromotion }) 
   };
 
   const handleCreateOffer = () => {
-    if (!form.title.trim() || !form.code.trim() || !form.discountValue) {
-      setFormMessage('Add a title, promo code, and discount value.');
+    const isComplete = Boolean(
+      form.title.trim() &&
+        form.code.trim() &&
+        form.discountValue &&
+        form.validFrom.trim() &&
+        form.validUntil.trim() &&
+        form.description.trim()
+    );
+
+    if (!isComplete) {
+      setFormMessage('Please fill all promotion fields before creating the offer.');
       return;
     }
 
@@ -119,6 +128,15 @@ export default function AdminDashboardScreen({ promotions, onCreatePromotion }) 
     setForm(defaultForm);
     setFormMessage('Offer created and visible to users.');
   };
+
+  const isFormComplete = Boolean(
+    form.title.trim() &&
+      form.code.trim() &&
+      form.discountValue &&
+      form.validFrom.trim() &&
+      form.validUntil.trim() &&
+      form.description.trim()
+  );
 
   if (activePage === 'promotionCreate') {
     return (
@@ -269,8 +287,14 @@ export default function AdminDashboardScreen({ promotions, onCreatePromotion }) 
             style={styles.input}
           />
 
-          <Pressable onPress={handleCreateOffer} style={styles.createButton}>
-            <Text style={styles.createButtonText}>Create offer</Text>
+          <Pressable
+            onPress={handleCreateOffer}
+            disabled={!isFormComplete}
+            style={[styles.createButton, !isFormComplete && styles.createButtonDisabled]}
+          >
+            <Text style={[styles.createButtonText, !isFormComplete && styles.createButtonTextDisabled]}>
+              Create offer
+            </Text>
           </Pressable>
           {formMessage ? <Text style={styles.formMessage}>{formMessage}</Text> : null}
         </View>
@@ -789,6 +813,12 @@ const styles = StyleSheet.create({
     color: colors.surface,
     fontSize: 15,
     fontWeight: '900',
+  },
+  createButtonDisabled: {
+    backgroundColor: colors.border,
+  },
+  createButtonTextDisabled: {
+    color: colors.mutedText,
   },
   formMessage: {
     color: colors.brandBlue,
