@@ -1,7 +1,5 @@
 import { useMemo, useState } from 'react';
 import {
-  Image,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,206 +11,334 @@ import {
 import { formatDiscount } from '../services/promotionRules';
 import { colors, spacing } from '../theme';
 
-const logo = require('../assets/ack-logo.webp');
+const ui = {
+  background: '#F5F6F8',
+  card: '#FFFFFF',
+  cardSoft: '#FBFBFC',
+  border: '#E8E6E0',
+  text: '#111827',
+  muted: '#6B7280',
+  softText: '#9AA1AC',
+  shadow: 'rgba(12, 18, 28, 0.08)',
+  tintGold: '#FFF5DA',
+  tintRed: '#FDE8EA',
+  tintBlue: '#EAF0FF',
+  tintGreen: '#E8F7EF',
+  dark: '#0E1116',
+};
 
-const navItems = [
-  { key: 'overview', short: 'OV', label: 'Overview', eyebrow: 'Operations' },
-  { key: 'bookings', short: 'BK', label: 'Bookings', eyebrow: 'Scheduling' },
-  { key: 'promotions', short: 'PR', label: 'Promotions', eyebrow: 'Growth' },
-  { key: 'payments', short: 'PY', label: 'Payments', eyebrow: 'Finance' },
-  { key: 'reports', short: 'RP', label: 'Reports', eyebrow: 'Insights' },
-  { key: 'users', short: 'US', label: 'Users', eyebrow: 'Community' },
+const bottomTabs = [
+  { key: 'home', label: 'Home' },
+  { key: 'bookings', label: 'Bookings' },
+  { key: 'payments', label: 'Payments' },
+  { key: 'settings', label: 'Settings' },
 ];
 
-const commandStats = [
+const settingsTabs = [
+  { key: 'users', label: 'Users' },
+  { key: 'notifications', label: 'Notifications' },
+  { key: 'reviews', label: 'Reviews' },
+  { key: 'analytics', label: 'Reports' },
+  { key: 'loyalty', label: 'Loyalty' },
+  { key: 'promotions', label: 'Promotions' },
+];
+
+const bookingFilters = [
+  { key: 'all', label: 'All (56)' },
+  { key: 'pending', label: 'Pending (8)' },
+  { key: 'today', label: 'Today (12)' },
+  { key: 'completed', label: 'Completed (24)' },
+];
+
+const userFilters = [
+  { key: 'all', label: 'All (128)' },
+  { key: 'customers', label: 'Customers (112)' },
+  { key: 'admins', label: 'Admins (16)' },
+];
+
+const notificationFilters = [
+  { key: 'whatsapp', label: 'WhatsApp' },
+  { key: 'app', label: 'App Notifications' },
+  { key: 'templates', label: 'Templates' },
+];
+
+const dashboardStats = [
   {
-    label: 'Bookings today',
-    value: '28',
-    note: '+6 vs yesterday',
-    tone: '#E9D7A2',
+    label: "Today's Bookings",
+    value: '24',
+    accent: colors.brandBlue,
+    tone: ui.tintBlue,
   },
   {
-    label: 'Pending approvals',
-    value: '06',
-    note: '2 high-priority requests',
-    tone: '#F5C8D0',
+    label: 'Pending Requests',
+    value: '8',
+    accent: colors.brandGold,
+    tone: ui.tintGold,
   },
   {
-    label: 'Revenue today',
-    value: 'LKR 42K',
-    note: 'Manual payments included',
-    tone: '#CFEEDB',
+    label: "Today's Revenue",
+    value: 'LKR 82,450',
+    accent: colors.success,
+    tone: ui.tintGreen,
   },
   {
-    label: 'Offer conversion',
-    value: '14%',
-    note: 'Weekend push is trending up',
-    tone: '#D9E3FF',
+    label: 'Active Promotions',
+    value: '3',
+    accent: '#8B5CF6',
+    tone: '#F1E9FF',
+  },
+  {
+    label: 'Loyalty Points Issued',
+    value: '1,250',
+    accent: colors.brandBlue,
+    tone: ui.tintBlue,
+  },
+];
+
+const progressCards = [
+  {
+    label: 'Bookings completed',
+    value: '78%',
+    detail: '18 / 23',
+    progress: 78,
+    accent: colors.success,
+  },
+  {
+    label: 'Payments collected (manual)',
+    value: '64%',
+    detail: 'LKR 82,450 / LKR 128,000',
+    progress: 64,
+    accent: colors.brandBlue,
   },
 ];
 
 const quickActions = [
-  { key: 'bookings', title: 'Review queue', caption: 'Handle urgent booking changes' },
-  { key: 'promotions', title: 'Campaign board', caption: 'Check live offers and performance' },
-  { key: 'payments', title: 'Verify transfers', caption: 'Clear pending payment proofs' },
+  { key: 'bookings', label: 'Add Booking' },
+  { key: 'bookings', label: 'Block Slot' },
+  { key: 'promotions', label: 'Add Promotion' },
 ];
 
-const alertCards = [
-  {
-    title: 'Manual payment backlog',
-    body: '7 transfers still need confirmation before tonight’s prime slots lock in.',
-    tag: 'Urgent',
-  },
-  {
-    title: 'Morning slot pressure',
-    body: '6 AM to 8 AM availability dropped below 12% for the next two days.',
-    tag: 'Watch',
-  },
-  {
-    title: 'Promo code momentum',
-    body: 'First-time campaign is driving the highest repeat conversion this week.',
-    tag: 'Growth',
-  },
-];
+const upcomingBooking = {
+  name: 'Rohit Warriors',
+  slot: '10:00 AM - 12:00 PM',
+  date: '24 May 2025',
+  stadium: 'Indoor Turf 1',
+  players: '12 Players',
+  eta: 'In 45 mins',
+};
 
-const bookingQueue = [
+const bookings = [
   {
-    id: 'BK-2039',
-    customer: 'Colombo Kings',
-    slot: 'Today | 7:30 PM',
-    surface: 'Indoor Net A',
-    issue: 'Manual payment pending verification',
-    status: 'Needs review',
+    id: 'BK-2025-056',
+    name: 'Rohit Warriors',
+    date: '24 May 2025',
+    time: '10:00 AM - 12:00 PM',
+    stadium: 'Indoor Turf',
+    players: '12 Players',
+    payment: 'Pending',
+    status: 'Pending',
+    phone: '+91 98765 43210',
+    notes: 'Need extra stumps and new balls. Arriving 15 mins early.',
   },
   {
-    id: 'BK-2044',
-    customer: 'Nadeesha Perera',
-    slot: 'Tomorrow | 6:00 AM',
-    surface: 'Main Arena',
-    issue: 'Requested a reschedule to Friday evening',
-    status: 'Action required',
+    id: 'BK-2025-061',
+    name: 'Strikers XI',
+    date: '24 May 2025',
+    time: '11:00 AM - 01:00 PM',
+    stadium: 'Outdoor Ground',
+    players: '18 Players',
+    payment: 'Paid',
+    status: 'Approved',
+    phone: '+91 91234 56780',
+    notes: 'Coach requested corner cone setup.',
   },
   {
-    id: 'BK-2048',
-    customer: 'Thunder XI',
-    slot: 'Tomorrow | 8:00 PM',
-    surface: 'Indoor Net B',
-    issue: 'Confirmed and ready for check-in',
-    status: 'On track',
+    id: 'BK-2025-067',
+    name: 'Thunder Bulls',
+    date: '24 May 2025',
+    time: '04:00 PM - 06:00 PM',
+    stadium: 'Indoor Turf',
+    players: '10 Players',
+    payment: 'Paid',
+    status: 'Completed',
+    phone: '+91 99876 54321',
+    notes: 'Completed with no issues.',
   },
   {
-    id: 'BK-2052',
-    customer: 'Chamath Silva',
-    slot: 'Friday | 5:30 PM',
-    surface: 'Indoor Net A',
-    issue: 'Needs captain confirmation for added players',
-    status: 'Follow up',
-  },
-];
-
-const bookingHealth = [
-  { label: 'Prime-time occupancy', value: '91%' },
-  { label: 'Reschedule requests', value: '04' },
-  { label: 'Same-day cancellations', value: '01' },
-];
-
-const paymentRows = [
-  {
-    bookingId: 'BK-2039',
-    customer: 'Colombo Kings',
-    amount: 'LKR 8,500',
-    state: 'Pending verification',
-    note: 'Bank slip uploaded 12 mins ago',
+    id: 'BK-2025-070',
+    name: 'Royal Challengers',
+    date: '25 May 2025',
+    time: '09:00 AM - 11:00 AM',
+    stadium: 'Outdoor Ground',
+    players: '20 Players',
+    payment: 'Refunded',
+    status: 'Rejected',
+    phone: '+91 90012 34567',
+    notes: 'Rejected due to weather hold.',
   },
   {
-    bookingId: 'BK-2042',
-    customer: 'Hashan Fernando',
-    amount: 'LKR 4,500',
-    state: 'Partially paid',
-    note: 'Balance due before slot release',
-  },
-  {
-    bookingId: 'BK-2048',
-    customer: 'Thunder XI',
-    amount: 'LKR 11,000',
-    state: 'Paid',
-    note: 'Confirmed and ready for match pack',
+    id: 'BK-2025-074',
+    name: 'Net Practice Group',
+    date: '25 May 2025',
+    time: '06:00 PM - 07:00 PM',
+    stadium: 'Practice Nets',
+    players: '6 Players',
+    payment: 'Partial',
+    status: 'Pending',
+    phone: '+91 97654 32109',
+    notes: 'Pending final headcount confirmation.',
   },
 ];
 
-const financeStats = [
-  { label: 'Cleared today', value: 'LKR 31K' },
-  { label: 'Pending proof', value: 'LKR 13K' },
-  { label: 'Refund exposure', value: 'LKR 2.5K' },
-];
-
-const reportCards = [
+const users = [
   {
-    title: 'Peak hour demand',
-    body: 'Demand is strongest between 6 PM and 9 PM, with indoor nets filling first and team bookings converting faster than individual sessions.',
-  },
-  {
-    title: 'Weekend revenue mix',
-    body: 'Weekend sessions contribute 48% of this week’s total revenue and show the strongest repeat-booking behavior among league teams.',
-  },
-  {
-    title: 'Promotion lift',
-    body: 'Promotions increased repeat bookings by 11% this month, especially among first-time players and off-peak trial bookings.',
-  },
-];
-
-const performanceBars = [
-  { label: 'Occupancy', value: 91, tone: '#C8961A' },
-  { label: 'Collection rate', value: 84, tone: '#1F2F86' },
-  { label: 'Offer adoption', value: 67, tone: '#9E1228' },
-  { label: 'Repeat players', value: 73, tone: '#1D7A4E' },
-];
-
-const activityFeed = [
-  'Payment proof received from Colombo Kings.',
-  'Weekend promo code activated on the user dashboard.',
-  'Reschedule request submitted for BK-2044.',
-  'Main Arena inventory check marked complete.',
-];
-
-const userSegments = [
-  { label: 'Active players', value: '1,284' },
-  { label: 'Priority teams', value: '42' },
-  { label: 'Pending reviews', value: '09' },
-];
-
-const userRows = [
-  {
-    name: 'Nadeesha Perera',
-    role: 'Player',
+    name: 'Rohit Sharma',
+    contact: '+91 98765 43210',
+    role: 'Customer',
+    type: 'customers',
     status: 'Active',
-    note: 'Booked 3 sessions in the last 14 days',
   },
   {
-    name: 'Colombo Kings',
-    role: 'Team account',
-    status: 'Priority',
-    note: 'High-volume weekend customer',
+    name: 'rahul.kapoor@email.com',
+    contact: '+91 91234 56789',
+    role: 'Customer',
+    type: 'customers',
+    status: 'Active',
   },
   {
-    name: 'Hashan Fernando',
-    role: 'Player',
-    status: 'Pending review',
-    note: 'Awaiting manual payment confirmation',
+    name: 'Amit Verma',
+    contact: '+91 99876 54321',
+    role: 'Admin',
+    type: 'admins',
+    status: 'Active',
+  },
+  {
+    name: 'Sneha Iyer',
+    contact: '+91 97654 32109',
+    role: 'Customer',
+    type: 'customers',
+    status: 'Blocked',
+  },
+  {
+    name: 'Vikram Singh',
+    contact: '+91 90012 34567',
+    role: 'Customer',
+    type: 'customers',
+    status: 'Active',
   },
 ];
 
-const campaignOptions = [
-  { label: 'Standard', value: 'standard' },
-  { label: 'First-time', value: 'firstTime' },
-  { label: 'Weekend', value: 'weekend' },
-  { label: 'Seasonal', value: 'seasonal' },
+const payments = [
+  {
+    name: 'Rohit Warriors',
+    date: '24 May',
+    stadium: 'Indoor Turf',
+    amount: 'LKR 1,600',
+    method: 'Cash',
+    status: 'Paid',
+  },
+  {
+    name: 'Strikers XI',
+    date: '24 May',
+    stadium: 'Outdoor Ground',
+    amount: 'LKR 3,500',
+    method: 'Bank Transfer',
+    status: 'Partial',
+  },
+  {
+    name: 'Thunder Bulls',
+    date: '24 May',
+    stadium: 'Indoor Turf',
+    amount: 'LKR 1,600',
+    method: 'Cash',
+    status: 'Paid',
+  },
+  {
+    name: 'Royal Challengers',
+    date: '25 May',
+    stadium: 'Outdoor Ground',
+    amount: 'LKR 3,500',
+    method: 'Cash',
+    status: 'Pending',
+  },
+  {
+    name: 'Net Practice Group',
+    date: '25 May',
+    stadium: 'Nets',
+    amount: 'LKR 600',
+    method: 'Cash',
+    status: 'Refunded',
+  },
 ];
 
-const applyOptions = [
-  { label: 'All slots', value: 'all' },
-  { label: 'Peak hours', value: 'peak' },
-  { label: 'Off-peak', value: 'offPeak' },
+const whatsappTemplates = [
+  {
+    title: 'Booking confirmation',
+    body: 'Hi {name}, your booking at {stadium} on {date} at {time} is confirmed. See you on the field.',
+  },
+  {
+    title: 'Payment reminder',
+    body: 'Hi {name}, payment of {amount} for your booking on {date} is pending. Please confirm manually at the desk.',
+  },
+  {
+    title: 'Booking reminder',
+    body: 'Reminder: your practice session starts at {time}. Please arrive 15 minutes early.',
+  },
+  {
+    title: 'Promotion message',
+    body: 'Weekend slots are filling fast. Use your latest ACK offer before it expires.',
+  },
+];
+
+const appNotifications = [
+  {
+    title: 'Weekend Slots Open',
+    message: 'Prime evening slots are now available for Sunday bookings.',
+    target: 'All users',
+    type: 'Booking',
+  },
+  {
+    title: 'Manual Payment Reminder',
+    message: 'Please complete your offline payment confirmation before arrival.',
+    target: 'Customers',
+    type: 'Payment',
+  },
+];
+
+const reviews = [
+  {
+    name: 'Rohit Sharma',
+    rating: 5,
+    date: '24 May 2025',
+    message: 'Excellent turf and lighting. Great experience.',
+  },
+  {
+    name: 'Amit Verma',
+    rating: 4,
+    date: '22 May 2025',
+    message: 'Good ground. More parking space needed.',
+  },
+  {
+    name: 'Sneha Iyer',
+    rating: 5,
+    date: '20 May 2025',
+    message: 'Very well maintained. Will book again.',
+  },
+];
+
+const analyticsStats = [
+  { label: 'Total bookings', value: '156', note: '+16% vs last week', accent: colors.brandBlue },
+  { label: 'Revenue (manual)', value: 'LKR 1,28,000', note: '+22% vs last week', accent: colors.success },
+  { label: 'Active users', value: '94', note: '+12% vs last week', accent: colors.brandGold },
+  { label: 'New users', value: '23', note: '+8% vs last week', accent: colors.brandRed },
+];
+
+const loyaltyLeaders = [
+  { name: 'Rohit Sharma', points: '320 pts', tier: 'Gold' },
+  { name: 'Amit Verma', points: '280 pts', tier: 'Silver' },
+  { name: 'Sneha Iyer', points: '210 pts', tier: 'Silver' },
+  { name: 'Vikram Singh', points: '180 pts', tier: 'Bronze' },
+  { name: 'Karan Mehta', points: '140 pts', tier: 'Bronze' },
 ];
 
 const defaultForm = {
@@ -227,136 +353,346 @@ const defaultForm = {
   description: '',
 };
 
-function SectionHeader({ eyebrow, title, caption, action, compact = false }) {
+const applyOptions = [
+  { label: 'All slots', value: 'all' },
+  { label: 'Peak hours', value: 'peak' },
+  { label: 'Off-peak', value: 'offPeak' },
+];
+
+const campaignOptions = [
+  { label: 'Standard', value: 'standard' },
+  { label: 'First-time', value: 'firstTime' },
+  { label: 'Weekend', value: 'weekend' },
+  { label: 'Seasonal', value: 'seasonal' },
+];
+
+function initialsFromName(name) {
+  const parts = name.split(' ').filter(Boolean);
+  if (!parts.length) {
+    return 'A';
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join('');
+}
+
+function badgeTone(label) {
+  const normalized = label.toLowerCase();
+
+  if (normalized.includes('approved') || normalized.includes('paid') || normalized.includes('active') || normalized.includes('available') || normalized.includes('gold')) {
+    return { bg: ui.tintGreen, color: colors.success };
+  }
+
+  if (normalized.includes('pending') || normalized.includes('partial') || normalized.includes('watch') || normalized.includes('silver')) {
+    return { bg: ui.tintGold, color: colors.brandGold };
+  }
+
+  if (normalized.includes('rejected') || normalized.includes('blocked') || normalized.includes('refunded') || normalized.includes('urgent') || normalized.includes('bronze')) {
+    return { bg: ui.tintRed, color: colors.brandRed };
+  }
+
+  if (normalized.includes('completed') || normalized.includes('admin')) {
+    return { bg: ui.tintBlue, color: colors.brandBlue };
+  }
+
+  return { bg: '#F3F4F6', color: ui.muted };
+}
+
+function AppHeader({ title, subtitle, onBack, rightLabel }) {
   return (
-    <View style={[styles.sectionHeader, compact && styles.sectionHeaderCompact]}>
-      <View style={styles.sectionHeaderCopy}>
-        <Text style={styles.sectionEyebrow}>{eyebrow}</Text>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        {caption ? <Text style={styles.sectionCaption}>{caption}</Text> : null}
+    <View style={styles.header}>
+      <View style={styles.headerLeft}>
+        {onBack ? (
+          <Pressable onPress={onBack} style={styles.backButton}>
+            <Text style={styles.backButtonText}>{'<'}</Text>
+          </Pressable>
+        ) : null}
+        <View style={styles.headerCopy}>
+          <Text style={styles.headerTitle}>{title}</Text>
+          {subtitle ? <Text style={styles.headerSubtitle}>{subtitle}</Text> : null}
+        </View>
       </View>
-      {action ? (
-        <Text style={[styles.sectionAction, compact && styles.sectionActionCompact]}>
-          {action}
-        </Text>
-      ) : null}
+
+      <View style={styles.headerRight}>
+        <Pressable style={styles.iconButton}>
+          <Text style={styles.iconButtonText}>O</Text>
+        </Pressable>
+        <Pressable style={styles.iconButton}>
+          <Text style={styles.iconButtonText}>=</Text>
+        </Pressable>
+        {rightLabel ? (
+          <View style={styles.headerBadge}>
+            <Text style={styles.headerBadgeText}>{rightLabel}</Text>
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }
 
-function StatCard({ label, value, note, tone }) {
+function StatusBadge({ label }) {
+  const tone = badgeTone(label);
+
+  return (
+    <View style={[styles.statusBadge, { backgroundColor: tone.bg }]}>
+      <Text style={[styles.statusBadgeText, { color: tone.color }]}>{label}</Text>
+    </View>
+  );
+}
+
+function SegmentTabs({ items, value, onChange }) {
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.segmentTabs}
+    >
+      {items.map((item) => {
+        const active = value === item.key;
+        return (
+          <Pressable
+            key={item.key}
+            onPress={() => onChange(item.key)}
+            style={[styles.segmentTab, active && styles.segmentTabActive]}
+          >
+            <Text style={[styles.segmentTabText, active && styles.segmentTabTextActive]}>
+              {item.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+function SearchBar({ placeholder }) {
+  return (
+    <View style={styles.searchBar}>
+      <Text style={styles.searchIcon}>O</Text>
+      <TextInput
+        placeholder={placeholder}
+        placeholderTextColor={ui.softText}
+        style={styles.searchInput}
+      />
+      <Pressable style={styles.searchFilter}>
+        <Text style={styles.searchFilterText}>=</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function StatCard({ label, value, accent, tone }) {
   return (
     <View style={styles.statCard}>
-      <View style={[styles.statAccent, { backgroundColor: tone }]} />
-      <Text style={styles.statLabel}>{label}</Text>
+      <View style={[styles.statIcon, { backgroundColor: tone }]}>
+        <View style={[styles.statIconDot, { backgroundColor: accent }]} />
+      </View>
       <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statNote}>{note}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
     </View>
   );
 }
 
-function ActionCard({ title, caption, onPress }) {
+function ProgressCard({ label, value, detail, progress, accent }) {
   return (
-    <Pressable onPress={onPress} style={styles.actionCard}>
-      <Text style={styles.actionCardTitle}>{title}</Text>
-      <Text style={styles.actionCardText}>{caption}</Text>
-    </Pressable>
-  );
-}
-
-function AlertCard({ title, body, tag }) {
-  return (
-    <View style={styles.alertCard}>
-      <Text style={styles.alertTag}>{tag}</Text>
-      <Text style={styles.alertTitle}>{title}</Text>
-      <Text style={styles.alertText}>{body}</Text>
-    </View>
-  );
-}
-
-function ProgressRow({ label, value, tone }) {
-  return (
-    <View style={styles.progressRow}>
-      <View style={styles.progressHeader}>
+    <View style={styles.progressCard}>
+      <View style={styles.progressTop}>
         <Text style={styles.progressLabel}>{label}</Text>
-        <Text style={styles.progressValue}>{value}%</Text>
+        <Text style={styles.progressValue}>{value}</Text>
       </View>
       <View style={styles.progressTrack}>
         <View
           style={[
             styles.progressFill,
-            { width: `${value}%`, backgroundColor: tone },
+            { width: `${progress}%`, backgroundColor: accent },
           ]}
         />
       </View>
+      <Text style={styles.progressDetail}>{detail}</Text>
     </View>
   );
 }
 
-function DataRow({ title, meta, right, note, light = false, compact = false }) {
+function QuickActionButton({ label, onPress }) {
   return (
-    <View
-      style={[
-        styles.dataRow,
-        compact && styles.dataRowCompact,
-        light && styles.dataRowLight,
-      ]}
-    >
-      <View style={styles.dataCopy}>
-        <Text style={[styles.dataTitle, light && styles.dataTitleLight]}>{title}</Text>
-        <Text style={[styles.dataMeta, light && styles.dataMetaLight]}>{meta}</Text>
-        {note ? <Text style={[styles.dataNote, light && styles.dataNoteLight]}>{note}</Text> : null}
+    <Pressable onPress={onPress} style={styles.quickActionButton}>
+      <Text style={styles.quickActionButtonText}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function BookingCard({ booking, onPress }) {
+  return (
+    <Pressable onPress={onPress} style={styles.listCard}>
+      <View style={styles.listCardTop}>
+        <View style={styles.listIdentity}>
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarText}>{initialsFromName(booking.name)}</Text>
+          </View>
+          <View style={styles.listCopy}>
+            <Text style={styles.listTitle}>{booking.name}</Text>
+            <Text style={styles.listMeta}>
+              {booking.date} | {booking.time}
+            </Text>
+          </View>
+        </View>
+        <StatusBadge label={booking.status} />
       </View>
-      <View
-        style={[
-          styles.dataPill,
-          compact && styles.dataPillCompact,
-          light && styles.dataPillLight,
-        ]}
-      >
-        <Text style={[styles.dataPillText, light && styles.dataPillTextLight]}>
-          {right}
-        </Text>
+
+      <View style={styles.bookingMetaRow}>
+        <Text style={styles.bookingMetaItem}>{booking.stadium}</Text>
+        <Text style={styles.bookingMetaItem}>{booking.players}</Text>
+      </View>
+
+      <View style={styles.bookingBottomRow}>
+        <StatusBadge label={booking.payment} />
+        <Text style={styles.moreText}>View</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+function UserCard({ user }) {
+  return (
+    <View style={styles.listCard}>
+      <View style={styles.listCardTop}>
+        <View style={styles.listIdentity}>
+          <View style={[styles.avatarCircle, styles.avatarCircleSoft]}>
+            <Text style={[styles.avatarText, styles.avatarTextDark]}>
+              {initialsFromName(user.name)}
+            </Text>
+          </View>
+          <View style={styles.listCopy}>
+            <Text style={styles.listTitle}>{user.name}</Text>
+            <Text style={styles.listMeta}>{user.contact}</Text>
+          </View>
+        </View>
+        <Text style={styles.moreText}>...</Text>
+      </View>
+
+      <View style={styles.rowBetween}>
+        <StatusBadge label={user.role} />
+        <StatusBadge label={user.status} />
       </View>
     </View>
   );
 }
 
-function Sidebar({ activePage, onSelect }) {
+function PaymentCard({ item }) {
   return (
-    <View>
-      <Text style={styles.sidebarEyebrow}>Workspaces</Text>
-      {navItems.map((item) => {
-        const active = item.key === activePage;
+    <View style={styles.listCard}>
+      <View style={styles.listCardTop}>
+        <View style={styles.listIdentity}>
+          <View style={[styles.avatarCircle, styles.avatarCircleSoft]}>
+            <Text style={[styles.avatarText, styles.avatarTextDark]}>
+              {initialsFromName(item.name)}
+            </Text>
+          </View>
+          <View style={styles.listCopy}>
+            <Text style={styles.listTitle}>{item.name}</Text>
+            <Text style={styles.listMeta}>
+              {item.date} | {item.stadium}
+            </Text>
+          </View>
+        </View>
+        <StatusBadge label={item.status} />
+      </View>
+
+      <View style={styles.rowBetween}>
+        <Text style={styles.paymentAmount}>{item.amount}</Text>
+        <Text style={styles.listMeta}>{item.method}</Text>
+      </View>
+    </View>
+  );
+}
+
+function ReviewCard({ item }) {
+  return (
+    <View style={styles.listCard}>
+      <View style={styles.listCardTop}>
+        <View>
+          <Text style={styles.listTitle}>{item.name}</Text>
+          <Text style={styles.listMeta}>{item.date}</Text>
+        </View>
+        <Text style={styles.ratingText}>{`${item.rating}.0 / 5`}</Text>
+      </View>
+
+      <Text style={styles.reviewText}>{item.message}</Text>
+
+      <View style={styles.actionRow}>
+        <Pressable style={styles.approveButton}>
+          <Text style={styles.approveButtonText}>Approve</Text>
+        </Pressable>
+        <Pressable style={styles.deleteButton}>
+          <Text style={styles.deleteButtonText}>Delete</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function PromotionCard({ item }) {
+  return (
+    <View style={styles.listCard}>
+      <View style={styles.listCardTop}>
+        <Text style={styles.promoCode}>{item.code}</Text>
+        <StatusBadge label={item.isActive ? 'Active' : 'Inactive'} />
+      </View>
+      <Text style={styles.promoValue}>{formatDiscount(item)}</Text>
+      <Text style={styles.listMeta}>
+        {item.validFrom} - {item.validUntil}
+      </Text>
+      <Text style={styles.reviewText}>
+        {item.description || `${item.campaignType} campaign for ${item.appliesTo}.`}
+      </Text>
+
+      <View style={styles.actionRow}>
+        <Pressable style={styles.inlineButton}>
+          <Text style={styles.inlineButtonText}>Edit</Text>
+        </Pressable>
+        <Pressable style={styles.deleteButton}>
+          <Text style={styles.deleteButtonText}>Delete</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function FloatingActionButton({ label = '+' }) {
+  return (
+    <Pressable style={styles.fab}>
+      <Text style={styles.fabText}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function BottomTabs({ value, onChange }) {
+  return (
+    <View style={styles.bottomTabs}>
+      {bottomTabs.map((tab) => {
+        const active = value === tab.key;
         return (
           <Pressable
-            key={item.key}
-            onPress={() => onSelect(item.key)}
-            style={[styles.sidebarItem, active && styles.sidebarItemActive]}
+            key={tab.key}
+            onPress={() => onChange(tab.key)}
+            style={styles.bottomTab}
           >
-            <View style={[styles.sidebarIcon, active && styles.sidebarIconActive]}>
-              <Text
-                style={[
-                  styles.sidebarIconText,
-                  active && styles.sidebarIconTextActive,
-                ]}
-              >
-                {item.short}
-              </Text>
-            </View>
-            <View style={styles.sidebarCopy}>
-              <Text style={[styles.sidebarLabel, active && styles.sidebarLabelActive]}>
-                {item.label}
-              </Text>
-              <Text
-                style={[
-                  styles.sidebarMeta,
-                  active && styles.sidebarMetaActive,
-                ]}
-              >
-                {item.eyebrow}
-              </Text>
-            </View>
+            <View
+              style={[
+                styles.bottomTabDot,
+                active && styles.bottomTabDotActive,
+              ]}
+            />
+            <Text
+              style={[
+                styles.bottomTabText,
+                active && styles.bottomTabTextActive,
+              ]}
+            >
+              {tab.label}
+            </Text>
           </Pressable>
         );
       })}
@@ -369,32 +705,44 @@ export default function AdminDashboardScreen({
   onCreatePromotion,
 }) {
   const { width } = useWindowDimensions();
-  const compact = width < 390;
-  const phone = width < 430;
-  const tablet = width >= 760;
-  const contentPadding = compact ? spacing.md : spacing.lg;
-  const drawerWidth = Math.min(width * 0.78, 300);
-  const statWidth = compact ? '100%' : tablet ? '23.5%' : '48%';
+  const isWide = width >= 760;
 
-  const [activePage, setActivePage] = useState('overview');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('home');
+  const [settingsTab, setSettingsTab] = useState('users');
+  const [bookingFilter, setBookingFilter] = useState('all');
+  const [userFilter, setUserFilter] = useState('all');
+  const [notificationFilter, setNotificationFilter] = useState('whatsapp');
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [promotionMode, setPromotionMode] = useState('list');
   const [form, setForm] = useState(defaultForm);
   const [formMessage, setFormMessage] = useState('');
 
-  const activeItem = useMemo(() => {
-    const match = navItems.find((item) => item.key === activePage);
-    return match || navItems[0];
-  }, [activePage]);
+  const bookingRows = useMemo(() => {
+    if (bookingFilter === 'all') {
+      return bookings;
+    }
 
-  const promoCountLabel = `${promotions.length} live`;
+    if (bookingFilter === 'today') {
+      return bookings.filter((item) => item.date === '24 May 2025');
+    }
+
+    return bookings.filter(
+      (item) => item.status.toLowerCase() === bookingFilter.toLowerCase()
+    );
+  }, [bookingFilter]);
+
+  const visibleUsers = useMemo(() => {
+    if (userFilter === 'all') {
+      return users;
+    }
+
+    return users.filter((item) => item.type === userFilter);
+  }, [userFilter]);
+
+  const dashboardStatWidth = isWide ? '31.5%' : '48%';
 
   const updateForm = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
-  };
-
-  const openWorkspace = (page) => {
-    setActivePage(page);
-    setSidebarOpen(false);
   };
 
   const handleCreateOffer = () => {
@@ -413,674 +761,566 @@ export default function AdminDashboardScreen({
     });
 
     setForm(defaultForm);
-    setFormMessage('Offer created and visible to users.');
-    setActivePage('promotions');
+    setFormMessage('Promotion created successfully.');
+    setPromotionMode('list');
   };
 
-  const renderOverview = () => (
-    <View>
-      <SectionHeader
-        eyebrow="Overview"
-        title="Live operations board"
-        caption="High-clarity monitoring for bookings, collections, promotions, and service pressure."
-        action="Refreshing now"
-        compact={phone}
-      />
+  const renderDashboard = () => (
+    <ScrollView
+      style={styles.content}
+      contentContainerStyle={styles.contentBody}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.greetingCard}>
+        <Text style={styles.greetingTitle}>Good morning, Admin!</Text>
+        <Text style={styles.greetingText}>Here is what is happening today.</Text>
+      </View>
 
       <View style={styles.statGrid}>
-        {commandStats.map((metric) => (
-          <View key={metric.label} style={{ width: statWidth }}>
-            <StatCard {...metric} />
+        {dashboardStats.map((item) => (
+          <View key={item.label} style={{ width: dashboardStatWidth }}>
+            <StatCard {...item} />
           </View>
         ))}
       </View>
 
-      <View style={[styles.panelRow, !tablet && styles.panelColumn]}>
-        <View style={styles.commandPanel}>
-          <SectionHeader
-            eyebrow="Command"
-            title="Immediate action lanes"
-            caption="Shortcuts for the most common admin decisions."
-            compact={phone}
-          />
-          <View style={styles.actionGrid}>
-            {quickActions.map((item) => (
-              <ActionCard
-                key={item.key}
-                title={item.title}
-                caption={item.caption}
-                onPress={() => openWorkspace(item.key)}
-              />
-            ))}
-          </View>
+      <View style={styles.progressStack}>
+        {progressCards.map((item) => (
+          <ProgressCard key={item.label} {...item} />
+        ))}
+      </View>
 
-          <View style={styles.healthStrip}>
-            {bookingHealth.map((item) => (
-              <View key={item.label} style={styles.healthTile}>
-                <Text style={styles.healthValue}>{item.value}</Text>
-                <Text style={styles.healthLabel}>{item.label}</Text>
-              </View>
-            ))}
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionCardTitle}>Upcoming booking</Text>
+        <View style={styles.upcomingCard}>
+          <View style={styles.rowBetween}>
+            <Text style={styles.listTitle}>{upcomingBooking.slot}</Text>
+            <StatusBadge label={upcomingBooking.eta} />
           </View>
-        </View>
-
-        <View style={styles.activityPanel}>
-          <SectionHeader
-            eyebrow="Attention"
-            title="What needs an admin now"
-            caption="Quick scan before you drill into a workspace."
-            compact={phone}
-          />
-          <View style={styles.alertStack}>
-            {alertCards.map((item) => (
-              <AlertCard key={item.title} {...item} />
-            ))}
+          <Text style={styles.listMeta}>{upcomingBooking.stadium}</Text>
+          <View style={styles.listIdentityCompact}>
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarText}>
+                {initialsFromName(upcomingBooking.name)}
+              </Text>
+            </View>
+            <View>
+              <Text style={styles.listTitle}>{upcomingBooking.name}</Text>
+              <Text style={styles.listMeta}>
+                {upcomingBooking.players} | {upcomingBooking.date}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
 
-      <View style={[styles.panelRow, !tablet && styles.panelColumn]}>
-        <View style={styles.surfacePanel}>
-          <SectionHeader
-            eyebrow="Queue"
-            title="Booking priority list"
-            caption="Fast triage for requests that can affect occupancy and customer confidence."
-            action="4 items"
-            compact={phone}
+      <View style={styles.sectionCard}>
+        <Text style={styles.sectionCardTitle}>Quick actions</Text>
+        <View style={styles.quickActionsRow}>
+          {quickActions.map((item) => (
+            <QuickActionButton
+              key={item.key}
+              label={item.label}
+              onPress={() => {
+                if (item.key === 'promotions') {
+                  setActiveTab('settings');
+                  setSettingsTab('promotions');
+                } else {
+                  setActiveTab(item.key);
+                }
+              }}
+            />
+          ))}
+        </View>
+      </View>
+    </ScrollView>
+  );
+
+  const renderBookings = () => {
+    if (selectedBooking) {
+      return (
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={styles.contentBody}
+          showsVerticalScrollIndicator={false}
+        >
+          <AppHeader
+            title="Booking Details"
+            subtitle={selectedBooking.id}
+            onBack={() => setSelectedBooking(null)}
           />
-          <View style={styles.stackedList}>
-            {bookingQueue.slice(0, 3).map((item) => (
-              <DataRow
-                key={item.id}
-                title={`${item.customer} | ${item.id}`}
-                meta={`${item.slot} | ${item.surface}`}
-                right={item.status}
-                note={item.issue}
-                compact={phone}
+
+          <View style={styles.sectionCard}>
+            <View style={styles.rowBetween}>
+              <StatusBadge label={selectedBooking.status} />
+              <Text style={styles.listMeta}>Booking ID: {selectedBooking.id}</Text>
+            </View>
+
+            <View style={[styles.listIdentityCompact, styles.spacingTop]}>
+              <View style={styles.avatarCircle}>
+                <Text style={styles.avatarText}>
+                  {initialsFromName(selectedBooking.name)}
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.sectionCardTitle}>{selectedBooking.name}</Text>
+                <Text style={styles.listMeta}>{selectedBooking.phone}</Text>
+              </View>
+            </View>
+
+            <View style={styles.detailsStack}>
+              <Text style={styles.detailLine}>{selectedBooking.date}</Text>
+              <Text style={styles.detailLine}>{selectedBooking.time}</Text>
+              <Text style={styles.detailLine}>{selectedBooking.stadium}</Text>
+              <Text style={styles.detailLine}>{selectedBooking.players}</Text>
+              <Text style={styles.detailLine}>Payment: {selectedBooking.payment}</Text>
+            </View>
+          </View>
+
+          <View style={styles.sectionCard}>
+            <Text style={styles.sectionCardTitle}>Notes</Text>
+            <Text style={styles.reviewText}>{selectedBooking.notes}</Text>
+          </View>
+
+          <View style={styles.actionStack}>
+            <Pressable style={styles.primaryAction}>
+              <Text style={styles.primaryActionText}>Approve Booking</Text>
+            </Pressable>
+            <Pressable style={styles.secondaryActionRed}>
+              <Text style={styles.secondaryActionRedText}>Reject Booking</Text>
+            </Pressable>
+            <Pressable style={styles.secondaryAction}>
+              <Text style={styles.secondaryActionText}>Block This Slot</Text>
+            </Pressable>
+            <Pressable style={styles.secondaryActionBlue}>
+              <Text style={styles.secondaryActionBlueText}>Mark as Confirmed</Text>
+            </Pressable>
+            <Pressable style={styles.secondaryAction}>
+              <Text style={styles.secondaryActionText}>Mark Payment as Paid</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      );
+    }
+
+    return (
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentBody}
+        showsVerticalScrollIndicator={false}
+      >
+        <AppHeader title="Bookings" subtitle="Track and manage booking requests" />
+        <SegmentTabs
+          items={bookingFilters}
+          value={bookingFilter}
+          onChange={setBookingFilter}
+        />
+
+        <View style={styles.listStack}>
+          {bookingRows.map((item) => (
+            <BookingCard
+              key={item.id}
+              booking={item}
+              onPress={() => setSelectedBooking(item)}
+            />
+          ))}
+        </View>
+      </ScrollView>
+    );
+  };
+
+  const renderPayments = () => (
+    <View style={styles.flexFill}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentBody}
+        showsVerticalScrollIndicator={false}
+      >
+        <AppHeader title="Payments" subtitle="Manual and offline collection tracking" />
+
+        <View style={styles.collectionCard}>
+          <Text style={styles.listMeta}>Today's collections</Text>
+          <Text style={styles.collectionValue}>LKR 82,450</Text>
+          <Text style={styles.progressDetail}>From 18 manual bookings today</Text>
+          <View style={styles.barChartRow}>
+            {[22, 40, 58, 36, 74, 52].map((height, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.barChartBar,
+                  {
+                    height,
+                    backgroundColor:
+                      index % 2 === 0 ? colors.success : colors.brandBlue,
+                  },
+                ]}
               />
             ))}
           </View>
         </View>
 
-        <View style={styles.surfacePanel}>
-          <SectionHeader
-            eyebrow="Performance"
-            title="Operational scorecard"
-            caption="Simple reporting that works well on mobile and desktop."
-            compact={phone}
-          />
-          <View style={styles.progressStack}>
-            {performanceBars.map((item) => (
-              <ProgressRow key={item.label} {...item} />
-            ))}
-          </View>
+        <SegmentTabs
+          items={[
+            { key: 'all', label: 'All (82)' },
+            { key: 'paid', label: 'Paid (48)' },
+            { key: 'pending', label: 'Pending (19)' },
+            { key: 'partial', label: 'Partial (9)' },
+          ]}
+          value="all"
+          onChange={() => {}}
+        />
 
-          <View style={styles.feedPanel}>
-            <Text style={styles.feedTitle}>Recent activity</Text>
-            {activityFeed.map((item) => (
-              <View key={item} style={styles.feedRow}>
-                <View style={styles.feedDot} />
-                <Text style={styles.feedText}>{item}</Text>
-              </View>
-            ))}
-          </View>
+        <View style={styles.listStack}>
+          {payments.map((item) => (
+            <PaymentCard key={`${item.name}-${item.date}`} item={item} />
+          ))}
         </View>
-      </View>
+
+        <View style={styles.noteCard}>
+          <Text style={styles.noteText}>
+            All payments are offline. Manual confirmation required.
+          </Text>
+        </View>
+      </ScrollView>
+      <FloatingActionButton />
     </View>
   );
 
-  const renderBookings = () => (
-    <View>
-      <SectionHeader
-        eyebrow="Bookings"
-        title="Scheduling and booking control"
-        caption="Manage exceptions, prepare peak slots, and keep the day running cleanly."
-        action="3 urgent"
-        compact={phone}
+  const renderUsersPanel = () => (
+    <View style={styles.settingsBody}>
+      <SegmentTabs items={userFilters} value={userFilter} onChange={setUserFilter} />
+      <SearchBar placeholder="Search users" />
+      <View style={styles.listStack}>
+        {visibleUsers.map((item) => (
+          <UserCard key={`${item.name}-${item.contact}`} user={item} />
+        ))}
+      </View>
+      <FloatingActionButton />
+    </View>
+  );
+
+  const renderNotificationsPanel = () => (
+    <View style={styles.settingsBody}>
+      <SegmentTabs
+        items={notificationFilters}
+        value={notificationFilter}
+        onChange={setNotificationFilter}
       />
 
-      <View style={styles.surfacePanel}>
-        <View style={styles.healthStrip}>
-          {bookingHealth.map((item) => (
-            <View key={item.label} style={styles.healthTileLight}>
-              <Text style={styles.healthValueDark}>{item.value}</Text>
-              <Text style={styles.healthLabelDark}>{item.label}</Text>
+      {notificationFilter === 'app' ? (
+        <View style={styles.listStack}>
+          {appNotifications.map((item) => (
+            <View key={item.title} style={styles.listCard}>
+              <Text style={styles.listTitle}>{item.title}</Text>
+              <Text style={styles.reviewText}>{item.message}</Text>
+              <View style={styles.rowBetween}>
+                <StatusBadge label={item.target} />
+                <StatusBadge label={item.type} />
+              </View>
+            </View>
+          ))}
+
+          <View style={styles.formCard}>
+            <Text style={styles.sectionCardTitle}>Create notification</Text>
+            <TextInput placeholder="Title" placeholderTextColor={ui.softText} style={styles.formInput} />
+            <TextInput placeholder="Message" placeholderTextColor={ui.softText} style={[styles.formInput, styles.formTextarea]} multiline />
+            <TextInput placeholder="Target users" placeholderTextColor={ui.softText} style={styles.formInput} />
+            <TextInput placeholder="Notification type" placeholderTextColor={ui.softText} style={styles.formInput} />
+            <Pressable style={styles.primaryAction}>
+              <Text style={styles.primaryActionText}>Create Notification</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.listStack}>
+          {whatsappTemplates.map((item) => (
+            <View key={item.title} style={styles.listCard}>
+              <Text style={styles.listTitle}>{item.title}</Text>
+              <Text style={styles.reviewText}>{item.body}</Text>
+              <Pressable style={styles.approveButton}>
+                <Text style={styles.approveButtonText}>Send</Text>
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+
+  const renderReviewsPanel = () => (
+    <View style={styles.settingsBody}>
+      <View style={styles.ratingSummaryCard}>
+        <Text style={styles.ratingAverage}>4.6</Text>
+        <Text style={styles.progressDetail}>Based on 128 reviews</Text>
+        <View style={styles.breakdownStack}>
+          {[
+            { stars: '5', percent: 78 },
+            { stars: '4', percent: 16 },
+            { stars: '3', percent: 4 },
+            { stars: '2', percent: 1 },
+            { stars: '1', percent: 1 },
+          ].map((item) => (
+            <View key={item.stars} style={styles.breakdownRow}>
+              <Text style={styles.breakdownLabel}>{item.stars}</Text>
+              <View style={styles.breakdownTrack}>
+                <View
+                  style={[
+                    styles.breakdownFill,
+                    { width: `${item.percent}%` },
+                  ]}
+                />
+              </View>
+              <Text style={styles.breakdownValue}>{item.percent}%</Text>
             </View>
           ))}
         </View>
       </View>
 
-      <View style={styles.stackedList}>
-        {bookingQueue.map((item) => (
-          <DataRow
-            key={item.id}
-            title={`${item.customer} | ${item.id}`}
-            meta={`${item.slot} | ${item.surface}`}
-            right={item.status}
-            note={item.issue}
-            compact={phone}
-          />
+      <View style={styles.listStack}>
+        {reviews.map((item) => (
+          <ReviewCard key={`${item.name}-${item.date}`} item={item} />
         ))}
       </View>
     </View>
   );
 
-  const renderPromotions = () => (
-    <View>
-      <SectionHeader
-        eyebrow="Promotions"
-        title="Campaign management"
-        caption="Professional promotion controls with stronger visibility into live campaigns and growth levers."
-        action={promoCountLabel}
-        compact={phone}
-      />
-
-      <View style={styles.heroPromoPanel}>
-        <View style={styles.heroPromoCopy}>
-          <Text style={styles.heroPromoTitle}>Shape demand, not just discounts</Text>
-          <Text style={styles.heroPromoText}>
-            Use the admin workspace to push off-peak occupancy, onboard first-time
-            players, and keep weekend demand priced intelligently.
-          </Text>
-        </View>
-        <Pressable
-          onPress={() => {
-            setFormMessage('');
-            setActivePage('promotionCreate');
-          }}
-          style={styles.primaryInlineButton}
-        >
-          <Text style={styles.primaryInlineButtonText}>Create campaign</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.cardGrid}>
-        {promotions.map((promotion) => (
-          <View key={promotion.id} style={styles.campaignCard}>
-            <View style={styles.campaignHeader}>
-              <Text style={styles.campaignCode}>{promotion.code}</Text>
-              <View style={styles.campaignStatusPill}>
-                <Text style={styles.campaignStatusText}>
-                  {promotion.isActive ? 'Live' : 'Draft'}
-                </Text>
-              </View>
+  const renderAnalyticsPanel = () => (
+    <View style={styles.settingsBody}>
+      <View style={styles.statGrid}>
+        {analyticsStats.map((item) => (
+          <View key={item.label} style={{ width: '48%' }}>
+            <View style={styles.miniStatCard}>
+              <Text style={styles.statLabel}>{item.label}</Text>
+              <Text style={[styles.statValue, styles.statValueSmall]}>{item.value}</Text>
+              <Text style={[styles.progressDetail, { color: item.accent }]}>
+                {item.note}
+              </Text>
             </View>
-            <Text style={styles.campaignValue}>{formatDiscount(promotion)}</Text>
-            <Text style={styles.campaignMeta}>
-              {promotion.appliesTo} | {promotion.campaignType}
-            </Text>
-            <Text style={styles.campaignDates}>
-              {promotion.validFrom} - {promotion.validUntil}
-            </Text>
-            <Text style={styles.campaignDescription}>
-              {promotion.description}
-            </Text>
           </View>
         ))}
       </View>
+
+      <View style={styles.listCard}>
+        <Text style={styles.sectionCardTitle}>Bookings trend</Text>
+        <View style={styles.lineChart}>
+          {[28, 30, 46, 50, 41, 38, 56, 62, 53, 48, 66].map((point, index) => (
+            <View
+              key={index}
+              style={[
+                styles.linePoint,
+                { bottom: point, left: index * 24, backgroundColor: colors.brandBlue },
+              ]}
+            />
+          ))}
+        </View>
+        <View style={styles.analyticsFooter}>
+          <StatusBadge label="Peak hour 06 PM - 09 PM" />
+          <StatusBadge label="Most booked Indoor Turf" />
+          <StatusBadge label="Cancellation rate 6.4%" />
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderLoyaltyPanel = () => (
+    <View style={styles.settingsBody}>
+      <View style={styles.collectionCard}>
+        <Text style={styles.listMeta}>Total points issued</Text>
+        <Text style={styles.collectionValue}>1,250</Text>
+        <Text style={styles.progressDetail}>Reward activity is rising with repeat bookings</Text>
+      </View>
+
+      <View style={styles.listStack}>
+        {loyaltyLeaders.map((item) => (
+          <View key={item.name} style={styles.listCard}>
+            <View style={styles.rowBetween}>
+              <Text style={styles.listTitle}>{item.name}</Text>
+              <Text style={styles.paymentAmount}>{item.points}</Text>
+            </View>
+            <StatusBadge label={item.tier} />
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.noteCard}>
+        <Text style={styles.noteTitle}>Bonus offer</Text>
+        <Text style={styles.noteText}>
+          Earn 100 points on every 5 completed bookings. Manual reward confirmation required.
+        </Text>
+      </View>
+      <FloatingActionButton />
     </View>
   );
 
   const renderPromotionBuilder = () => (
-    <View>
-      <SectionHeader
-        eyebrow="Promotions"
-        title="Campaign builder"
-        caption="Create a polished offer with the details an admin team actually needs."
-        action="Draft mode"
-        compact={phone}
+    <View style={styles.formCard}>
+      <Text style={styles.sectionCardTitle}>Create promotion</Text>
+      <TextInput
+        value={form.title}
+        onChangeText={(value) => updateForm('title', value)}
+        placeholder="Offer title"
+        placeholderTextColor={ui.softText}
+        style={styles.formInput}
       />
-
-      <View style={[styles.panelRow, !tablet && styles.panelColumn]}>
-        <View style={styles.builderPanel}>
-          <View style={[styles.formRow, compact && styles.formColumn]}>
-            <TextInput
-              value={form.title}
-              onChangeText={(value) => updateForm('title', value)}
-              placeholder="Offer title"
-              placeholderTextColor="#8B9098"
-              style={styles.input}
-            />
-            <TextInput
-              value={form.code}
-              onChangeText={(value) => updateForm('code', value.toUpperCase())}
-              placeholder="CRICKET10"
-              placeholderTextColor="#8B9098"
-              autoCapitalize="characters"
-              style={styles.input}
-            />
-          </View>
-
-          <View style={styles.segmentRow}>
-            {['percentage', 'fixed'].map((type) => (
-              <Pressable
-                key={type}
-                onPress={() => updateForm('discountType', type)}
-                style={[
-                  styles.segmentButton,
-                  form.discountType === type && styles.segmentButtonActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.segmentButtonText,
-                    form.discountType === type && styles.segmentButtonTextActive,
-                  ]}
-                >
-                  {type === 'percentage' ? 'Percentage' : 'Fixed LKR'}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <TextInput
-            value={form.discountValue}
-            onChangeText={(value) => updateForm('discountValue', value)}
-            placeholder={
-              form.discountType === 'percentage'
-                ? 'Discount percentage'
-                : 'Discount amount'
-            }
-            placeholderTextColor="#8B9098"
-            keyboardType="numeric"
-            style={styles.input}
-          />
-
-          <View style={[styles.formRow, compact && styles.formColumn]}>
-            <TextInput
-              value={form.validFrom}
-              onChangeText={(value) => updateForm('validFrom', value)}
-              placeholder="Valid from"
-              placeholderTextColor="#8B9098"
-              style={styles.input}
-            />
-            <TextInput
-              value={form.validUntil}
-              onChangeText={(value) => updateForm('validUntil', value)}
-              placeholder="Valid until"
-              placeholderTextColor="#8B9098"
-              style={styles.input}
-            />
-          </View>
-
-          <Text style={styles.fieldLabel}>Apply to</Text>
-          <View style={styles.chipWrap}>
-            {applyOptions.map((option) => (
-              <Pressable
-                key={option.value}
-                onPress={() => updateForm('appliesTo', option.value)}
-                style={[
-                  styles.optionChip,
-                  form.appliesTo === option.value && styles.optionChipActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.optionChipText,
-                    form.appliesTo === option.value && styles.optionChipTextActive,
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <Text style={styles.fieldLabel}>Campaign type</Text>
-          <View style={styles.chipWrap}>
-            {campaignOptions.map((option) => (
-              <Pressable
-                key={option.value}
-                onPress={() => updateForm('campaignType', option.value)}
-                style={[
-                  styles.optionChip,
-                  form.campaignType === option.value && styles.optionChipActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.optionChipText,
-                    form.campaignType === option.value && styles.optionChipTextActive,
-                  ]}
-                >
-                  {option.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <TextInput
-            value={form.description}
-            onChangeText={(value) => updateForm('description', value)}
-            placeholder="Short offer description"
-            placeholderTextColor="#8B9098"
-            style={[styles.input, styles.descriptionInput]}
-            multiline
-          />
-
-          <View style={[styles.builderActions, compact && styles.formColumn]}>
-            <Pressable
-              onPress={() => setActivePage('promotions')}
-              style={styles.secondaryButton}
-            >
-              <Text style={styles.secondaryButtonText}>Back to campaigns</Text>
-            </Pressable>
-            <Pressable onPress={handleCreateOffer} style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>Publish offer</Text>
-            </Pressable>
-          </View>
-
-          {formMessage ? <Text style={styles.formMessage}>{formMessage}</Text> : null}
-        </View>
-
-        <View style={styles.builderAside}>
-          <Text style={styles.builderAsideEyebrow}>Preview</Text>
-          <Text style={styles.builderAsideTitle}>
-            {form.title || 'Your campaign title will appear here'}
-          </Text>
-          <Text style={styles.builderAsideValue}>
-            {form.discountValue
-              ? form.discountType === 'percentage'
-                ? `${form.discountValue}% off`
-                : `LKR ${form.discountValue} off`
-              : 'Add the discount amount'}
-          </Text>
-          <Text style={styles.builderAsideText}>
-            Code: {form.code || 'PROMO'} | Audience: {form.appliesTo}
-          </Text>
-          <Text style={styles.builderAsideText}>
-            Campaign: {form.campaignType} | Active: {form.validFrom} - {form.validUntil}
-          </Text>
-          <View style={styles.builderPreviewCard}>
-            <Text style={styles.builderPreviewCardTitle}>What this helps with</Text>
-            <Text style={styles.builderPreviewCardText}>
-              Strong admin campaigns are clear, time-bound, and attached to a real
-              demand goal such as off-peak fill, first booking conversion, or team
-              retention.
-            </Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderPayments = () => (
-    <View>
-      <SectionHeader
-        eyebrow="Payments"
-        title="Finance and verification"
-        caption="Keep incoming payments, pending proofs, and refund exposure visible at a glance."
-        action="Manual review"
-        compact={phone}
+      <TextInput
+        value={form.code}
+        onChangeText={(value) => updateForm('code', value.toUpperCase())}
+        placeholder="Promo code"
+        placeholderTextColor={ui.softText}
+        style={styles.formInput}
       />
-
-      <View style={styles.surfacePanel}>
-        <View style={styles.healthStrip}>
-          {financeStats.map((item) => (
-            <View key={item.label} style={styles.healthTileLight}>
-              <Text style={styles.healthValueDark}>{item.value}</Text>
-              <Text style={styles.healthLabelDark}>{item.label}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.stackedList}>
-        {paymentRows.map((payment) => (
-          <DataRow
-            key={payment.bookingId}
-            title={`${payment.customer} | ${payment.bookingId}`}
-            meta={payment.amount}
-            right={payment.state}
-            note={payment.note}
-            compact={phone}
-          />
-        ))}
-      </View>
-    </View>
-  );
-
-  const renderReports = () => (
-    <View>
-      <SectionHeader
-        eyebrow="Reports"
-        title="Reporting and trend reading"
-        caption="A sharper daily dashboard for checking capacity, collections, and campaign performance."
-        action="This week"
-        compact={phone}
-      />
-
-      <View style={styles.statGrid}>
-        {commandStats.map((metric) => (
-          <View key={metric.label} style={{ width: statWidth }}>
-            <StatCard {...metric} />
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.reportGrid}>
-        {reportCards.map((item) => (
-          <View key={item.title} style={styles.reportCard}>
-            <Text style={styles.reportTitle}>{item.title}</Text>
-            <Text style={styles.reportText}>{item.body}</Text>
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.surfacePanel}>
-        <SectionHeader
-          eyebrow="Trend"
-          title="Performance bars"
-          caption="Quick reading for team check-ins and operational standups."
-          compact={phone}
+      <View style={styles.formRow}>
+        <TextInput
+          value={form.validFrom}
+          onChangeText={(value) => updateForm('validFrom', value)}
+          placeholder="Valid from"
+          placeholderTextColor={ui.softText}
+          style={[styles.formInput, styles.formInputHalf]}
         />
-        <View style={styles.progressStack}>
-          {performanceBars.map((item) => (
-            <ProgressRow key={item.label} {...item} />
-          ))}
-        </View>
+        <TextInput
+          value={form.validUntil}
+          onChangeText={(value) => updateForm('validUntil', value)}
+          placeholder="Valid until"
+          placeholderTextColor={ui.softText}
+          style={[styles.formInput, styles.formInputHalf]}
+        />
       </View>
-    </View>
-  );
-
-  const renderUsers = () => (
-    <View>
-      <SectionHeader
-        eyebrow="Users"
-        title="Account and community management"
-        caption="Track account quality, priority teams, and users that need intervention."
-        action="Community"
-        compact={phone}
+      <View style={styles.segmentWrap}>
+        {['percentage', 'fixed'].map((item) => {
+          const active = form.discountType === item;
+          return (
+            <Pressable
+              key={item}
+              onPress={() => updateForm('discountType', item)}
+              style={[styles.optionPill, active && styles.optionPillActive]}
+            >
+              <Text style={[styles.optionPillText, active && styles.optionPillTextActive]}>
+                {item === 'percentage' ? 'Percentage' : 'Fixed'}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <TextInput
+        value={form.discountValue}
+        onChangeText={(value) => updateForm('discountValue', value)}
+        placeholder="Discount value"
+        placeholderTextColor={ui.softText}
+        style={styles.formInput}
+      />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.segmentWrap}>
+        {applyOptions.map((item) => {
+          const active = form.appliesTo === item.value;
+          return (
+            <Pressable
+              key={item.value}
+              onPress={() => updateForm('appliesTo', item.value)}
+              style={[styles.optionPill, active && styles.optionPillActive]}
+            >
+              <Text style={[styles.optionPillText, active && styles.optionPillTextActive]}>
+                {item.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.segmentWrap}>
+        {campaignOptions.map((item) => {
+          const active = form.campaignType === item.value;
+          return (
+            <Pressable
+              key={item.value}
+              onPress={() => updateForm('campaignType', item.value)}
+              style={[styles.optionPill, active && styles.optionPillActive]}
+            >
+              <Text style={[styles.optionPillText, active && styles.optionPillTextActive]}>
+                {item.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      <TextInput
+        value={form.description}
+        onChangeText={(value) => updateForm('description', value)}
+        placeholder="Description"
+        placeholderTextColor={ui.softText}
+        style={[styles.formInput, styles.formTextarea]}
+        multiline
       />
 
-      <View style={styles.surfacePanel}>
-        <View style={styles.healthStrip}>
-          {userSegments.map((item) => (
-            <View key={item.label} style={styles.healthTileLight}>
-              <Text style={styles.healthValueDark}>{item.value}</Text>
-              <Text style={styles.healthLabelDark}>{item.label}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
+      {formMessage ? <Text style={styles.formMessage}>{formMessage}</Text> : null}
 
-      <View style={styles.stackedList}>
-        {userRows.map((user) => (
-          <DataRow
-            key={user.name}
-            title={user.name}
-            meta={user.role}
-            right={user.status}
-            note={user.note}
-            light
-            compact={phone}
-          />
-        ))}
+      <View style={styles.actionRow}>
+        <Pressable
+          onPress={() => setPromotionMode('list')}
+          style={styles.secondaryAction}
+        >
+          <Text style={styles.secondaryActionText}>Cancel</Text>
+        </Pressable>
+        <Pressable onPress={handleCreateOffer} style={styles.primaryAction}>
+          <Text style={styles.primaryActionText}>Publish</Text>
+        </Pressable>
       </View>
     </View>
   );
 
-  const renderPanel = () => {
-    switch (activePage) {
-      case 'bookings':
-        return renderBookings();
-      case 'promotions':
-        return renderPromotions();
-      case 'promotionCreate':
-        return renderPromotionBuilder();
-      case 'payments':
-        return renderPayments();
-      case 'reports':
-        return renderReports();
-      case 'users':
-        return renderUsers();
-      case 'overview':
-      default:
-        return renderOverview();
-    }
-  };
+  const renderPromotionsPanel = () => (
+    <View style={styles.settingsBody}>
+      {promotionMode === 'create' ? (
+        renderPromotionBuilder()
+      ) : (
+        <>
+          <View style={styles.collectionCard}>
+            <Text style={styles.listMeta}>Promotions and offers</Text>
+            <Text style={styles.collectionValue}>{promotions.length}</Text>
+            <Text style={styles.progressDetail}>Active campaigns currently available in the user dashboard</Text>
+          </View>
+          <View style={styles.listStack}>
+            {promotions.map((item) => (
+              <PromotionCard key={item.id} item={item} />
+            ))}
+          </View>
+          <FloatingActionButton label="+" />
+        </>
+      )}
+    </View>
+  );
+
+  const renderSettings = () => (
+    <View style={styles.flexFill}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentBody}
+        showsVerticalScrollIndicator={false}
+      >
+        <AppHeader title={settingsTabs.find((item) => item.key === settingsTab)?.label || 'Settings'} subtitle="Admin tools and support workspaces" />
+        <SegmentTabs items={settingsTabs} value={settingsTab} onChange={setSettingsTab} />
+
+        {settingsTab === 'users' && renderUsersPanel()}
+        {settingsTab === 'notifications' && renderNotificationsPanel()}
+        {settingsTab === 'reviews' && renderReviewsPanel()}
+        {settingsTab === 'analytics' && renderAnalyticsPanel()}
+        {settingsTab === 'loyalty' && renderLoyaltyPanel()}
+        {settingsTab === 'promotions' && renderPromotionsPanel()}
+      </ScrollView>
+    </View>
+  );
 
   return (
     <View style={styles.root}>
-      <View pointerEvents="none" style={styles.backgroundLayer}>
-        <View style={styles.backgroundGlowTop} />
-        <View style={styles.backgroundGlowBottom} />
-      </View>
+      {activeTab === 'home' && renderDashboard()}
+      {activeTab === 'bookings' && renderBookings()}
+      {activeTab === 'payments' && renderPayments()}
+      {activeTab === 'settings' && renderSettings()}
 
-      <ScrollView
-        style={styles.screen}
-        contentContainerStyle={[
-          styles.content,
-          { paddingHorizontal: contentPadding, paddingBottom: spacing.xxl },
-        ]}
-        scrollEnabled={!sidebarOpen}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={[styles.heroCard, phone && styles.heroCardPhone]}>
-          <View pointerEvents="none" style={styles.heroGlow} />
-
-          <View style={[styles.heroTopRow, phone && styles.heroTopRowPhone]}>
-            <View style={styles.heroUtilityPill}>
-              <Text style={styles.heroUtilityText}>Professional admin workspace</Text>
-            </View>
-
-            <View style={[styles.heroControls, phone && styles.heroControlsPhone]}>
-              <View style={styles.livePill}>
-                <View style={styles.liveDot} />
-                <Text style={styles.liveText}>Live board</Text>
-              </View>
-              <Pressable onPress={() => setSidebarOpen(true)} style={styles.menuButton}>
-                <View style={styles.menuLine} />
-                <View style={styles.menuLine} />
-                <View style={styles.menuLineShort} />
-              </Pressable>
-            </View>
-          </View>
-
-          <View style={[styles.heroBrandRow, phone && styles.heroBrandRowPhone]}>
-            <Image
-              source={logo}
-              style={[styles.heroLogo, phone && styles.heroLogoPhone]}
-              resizeMode="contain"
-            />
-            <View style={styles.heroBrandCopy}>
-              <Text style={styles.heroBrandTitle}>ACK Indoor Cricket</Text>
-              <Text style={styles.heroBrandMeta}>Admin operations panel</Text>
-            </View>
-          </View>
-
-          <Text
-            style={[
-              styles.heroTitle,
-              phone && styles.heroTitlePhone,
-              compact && styles.heroTitleCompact,
-            ]}
-          >
-            Stadium operations, reporting, and growth in one control room.
-          </Text>
-
-          <Text style={[styles.heroSubtitle, phone && styles.heroSubtitlePhone]}>
-            A cleaner admin panel for bookings, finance checks, promotions,
-            reports, and customer oversight across mobile and wider screens.
-          </Text>
-
-          <View style={[styles.heroMetaRow, !tablet && styles.heroMetaColumn]}>
-            <View style={styles.heroPanelTag}>
-              <Text style={styles.heroPanelTagText}>Active workspace</Text>
-              <Text style={styles.heroPanelValue}>{activeItem.label}</Text>
-              <Text style={styles.heroPanelSubtext}>{activeItem.eyebrow}</Text>
-            </View>
-
-            <View style={styles.heroMiniStat}>
-              <Text style={styles.heroMiniStatValue}>07</Text>
-              <Text style={styles.heroMiniStatLabel}>Manual checks pending</Text>
-            </View>
-
-            <View style={styles.heroMiniStat}>
-              <Text style={styles.heroMiniStatValue}>91%</Text>
-              <Text style={styles.heroMiniStatLabel}>Prime-time occupancy</Text>
-            </View>
-          </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.workspacePills}
-          >
-            {navItems.map((item) => {
-              const active = item.key === activePage;
-              return (
-                <Pressable
-                  key={item.key}
-                  onPress={() => setActivePage(item.key)}
-                  style={[styles.workspacePill, active && styles.workspacePillActive]}
-                >
-                  <Text
-                    style={[
-                      styles.workspacePillText,
-                      active && styles.workspacePillTextActive,
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {renderPanel()}
-      </ScrollView>
-
-      <Modal
-        animationType="fade"
-        transparent
-        visible={sidebarOpen}
-        onRequestClose={() => setSidebarOpen(false)}
-      >
-        <View style={styles.drawerLayer}>
-          <Pressable
-            onPress={() => setSidebarOpen(false)}
-            style={styles.drawerBackdrop}
-          />
-          <View style={[styles.drawerPanel, { width: drawerWidth }]}>
-            <View style={styles.drawerHeader}>
-              <View>
-                <Text style={styles.drawerTitle}>Admin menu</Text>
-                <Text style={styles.drawerSubtitle}>Choose a workspace</Text>
-              </View>
-              <Pressable
-                onPress={() => setSidebarOpen(false)}
-                style={styles.drawerClose}
-              >
-                <Text style={styles.drawerCloseText}>Close</Text>
-              </Pressable>
-            </View>
-
-            <Sidebar activePage={activePage} onSelect={openWorkspace} />
-          </View>
-        </View>
-      </Modal>
+      <BottomTabs
+        value={selectedBooking ? 'bookings' : activeTab}
+        onChange={(nextTab) => {
+          setSelectedBooking(null);
+          setActiveTab(nextTab);
+        }}
+      />
     </View>
   );
 }
@@ -1088,1012 +1328,764 @@ export default function AdminDashboardScreen({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#F3EFE6',
+    backgroundColor: ui.background,
   },
-  backgroundLayer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  backgroundGlowTop: {
-    position: 'absolute',
-    top: -100,
-    right: -60,
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    backgroundColor: 'rgba(200,150,26,0.12)',
-  },
-  backgroundGlowBottom: {
-    position: 'absolute',
-    left: -90,
-    bottom: 120,
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    backgroundColor: 'rgba(31,47,134,0.08)',
-  },
-  screen: {
+  flexFill: {
     flex: 1,
-    backgroundColor: 'transparent',
   },
   content: {
-    paddingTop: spacing.lg,
+    flex: 1,
   },
-  heroCard: {
-    backgroundColor: '#0F1116',
-    borderRadius: 34,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: '#1E222D',
-    overflow: 'hidden',
-    marginBottom: spacing.xl,
+  contentBody: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: 110,
   },
-  heroCardPhone: {
-    borderRadius: 26,
-    padding: spacing.md,
-  },
-  heroGlow: {
-    position: 'absolute',
-    top: -20,
-    right: -10,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: 'rgba(200,150,26,0.15)',
-  },
-  heroTopRow: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: spacing.md,
     alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.md,
   },
-  heroTopRowPhone: {
-    flexDirection: 'column',
-    alignItems: 'stretch',
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
+    flex: 1,
   },
-  heroUtilityPill: {
-    alignSelf: 'flex-start',
+  headerCopy: {
+    flex: 1,
+  },
+  headerTitle: {
+    color: ui.text,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  headerSubtitle: {
+    color: ui.muted,
+    fontSize: 13,
+    marginTop: 4,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  iconButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: ui.card,
+    borderWidth: 1,
+    borderColor: ui.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconButtonText: {
+    color: ui.text,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  headerBadge: {
     borderRadius: 999,
     paddingHorizontal: spacing.sm,
     paddingVertical: 7,
-    backgroundColor: 'rgba(200,150,26,0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(200,150,26,0.24)',
+    backgroundColor: ui.tintGold,
   },
-  heroUtilityText: {
+  headerBadgeText: {
     color: colors.brandGold,
     fontSize: 11,
     fontWeight: '900',
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
   },
-  heroBrandRow: {
-    flexDirection: 'row',
+  backButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: ui.card,
+    borderWidth: 1,
+    borderColor: ui.border,
     alignItems: 'center',
-    gap: spacing.md,
-    marginTop: spacing.md,
+    justifyContent: 'center',
   },
-  heroBrandRowPhone: {
-    gap: spacing.sm,
+  backButtonText: {
+    color: ui.text,
+    fontSize: 13,
+    fontWeight: '900',
   },
-  heroLogo: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    backgroundColor: colors.surface,
+  greetingCard: {
+    borderRadius: 22,
+    backgroundColor: colors.success,
+    padding: spacing.md,
+    marginBottom: spacing.md,
   },
-  heroLogoPhone: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-  },
-  heroBrandCopy: {
-    flex: 1,
-  },
-  heroBrandTitle: {
+  greetingTitle: {
     color: colors.surface,
     fontSize: 18,
     fontWeight: '900',
   },
-  heroBrandMeta: {
-    color: '#929AA5',
-    fontSize: 12,
-    marginTop: 3,
-  },
-  heroTitle: {
-    color: colors.surface,
-    fontSize: 30,
-    lineHeight: 34,
-    fontWeight: '900',
-    marginTop: spacing.md,
-    maxWidth: '100%',
-  },
-  heroTitlePhone: {
-    fontSize: 22,
-    lineHeight: 27,
-  },
-  heroTitleCompact: {
-    fontSize: 22,
-    lineHeight: 27,
-  },
-  heroSubtitle: {
-    color: '#C5CAD3',
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: spacing.sm,
-    maxWidth: '100%',
-  },
-  heroSubtitlePhone: {
+  greetingText: {
+    color: '#E9FFF0',
     fontSize: 13,
-    lineHeight: 19,
-  },
-  heroControls: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.sm,
-  },
-  heroControlsPhone: {
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  menuButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: '#171A21',
-    borderWidth: 1,
-    borderColor: '#262A34',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  menuLine: {
-    width: 18,
-    height: 2,
-    borderRadius: 999,
-    backgroundColor: colors.surface,
-  },
-  menuLineShort: {
-    width: 12,
-    height: 2,
-    borderRadius: 999,
-    backgroundColor: colors.brandGold,
-  },
-  livePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    borderRadius: 999,
-    backgroundColor: 'rgba(158,18,40,0.22)',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 7,
-  },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#22C55E',
-  },
-  liveText: {
-    color: '#F2DADF',
-    fontSize: 12,
-    fontWeight: '900',
-  },
-  heroMetaRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.lg,
-  },
-  heroMetaColumn: {
-    flexDirection: 'column',
-  },
-  heroPanelTag: {
-    flex: 1.2,
-    borderRadius: 22,
-    padding: spacing.md,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: '#262B36',
-  },
-  heroPanelTagText: {
-    color: '#8E95A1',
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-  },
-  heroPanelValue: {
-    color: colors.surface,
-    fontSize: 22,
-    fontWeight: '900',
-    marginTop: 5,
-  },
-  heroPanelSubtext: {
-    color: '#9AA1AC',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  heroMiniStat: {
-    flex: 1,
-    borderRadius: 22,
-    padding: spacing.md,
-    backgroundColor: '#171A21',
-    borderWidth: 1,
-    borderColor: '#252934',
-  },
-  heroMiniStatValue: {
-    color: colors.surface,
-    fontSize: 22,
-    fontWeight: '900',
-  },
-  heroMiniStatLabel: {
-    color: '#98A0AB',
-    fontSize: 12,
-    marginTop: 5,
-  },
-  workspacePills: {
-    gap: spacing.sm,
-    paddingTop: spacing.lg,
-  },
-  workspacePill: {
-    borderRadius: 999,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: '#171A20',
-    borderWidth: 1,
-    borderColor: '#242933',
-  },
-  workspacePillActive: {
-    backgroundColor: colors.brandGold,
-    borderColor: colors.brandGold,
-  },
-  workspacePillText: {
-    color: '#CCD1D9',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  workspacePillTextActive: {
-    color: colors.brandBlack,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
-  },
-  sectionHeaderCompact: {
-    flexDirection: 'column',
-    gap: spacing.xs,
-  },
-  sectionHeaderCopy: {
-    flex: 1,
-  },
-  sectionEyebrow: {
-    color: colors.brandRed,
-    fontSize: 12,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: 24,
-    fontWeight: '900',
     marginTop: spacing.xs,
-  },
-  sectionCaption: {
-    color: '#6A6E78',
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: spacing.xs,
-  },
-  sectionAction: {
-    color: colors.brandGold,
-    fontSize: 12,
-    fontWeight: '900',
-    marginTop: 2,
-  },
-  sectionActionCompact: {
-    marginTop: 0,
   },
   statGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  statCard: {
-    minHeight: 156,
-    borderRadius: 26,
-    padding: spacing.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: '#E2DDD2',
-  },
-  statAccent: {
-    width: 42,
-    height: 8,
-    borderRadius: 999,
+    gap: spacing.sm,
     marginBottom: spacing.md,
   },
-  statLabel: {
-    color: '#696E78',
-    fontSize: 13,
-    fontWeight: '800',
+  statCard: {
+    borderRadius: 18,
+    backgroundColor: ui.card,
+    borderWidth: 1,
+    borderColor: ui.border,
+    padding: spacing.md,
+    minHeight: 118,
+  },
+  statIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statIconDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
   },
   statValue: {
-    color: colors.text,
-    fontSize: 30,
-    lineHeight: 33,
+    color: ui.text,
+    fontSize: 24,
     fontWeight: '900',
-    marginTop: spacing.sm,
-  },
-  statNote: {
-    color: '#7B8089',
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: spacing.sm,
-  },
-  panelRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  panelColumn: {
-    flexDirection: 'column',
-  },
-  commandPanel: {
-    flex: 1.3,
-    borderRadius: 30,
-    padding: spacing.md,
-    backgroundColor: '#111319',
-    borderWidth: 1,
-    borderColor: '#1F2330',
-  },
-  activityPanel: {
-    flex: 0.9,
-    borderRadius: 30,
-    padding: spacing.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: '#E2DDD2',
-  },
-  actionGrid: {
-    gap: spacing.sm,
-  },
-  actionCard: {
-    borderRadius: 22,
-    padding: spacing.md,
-    backgroundColor: '#191C24',
-    borderWidth: 1,
-    borderColor: '#272B37',
-  },
-  actionCardTitle: {
-    color: colors.surface,
-    fontSize: 16,
-    fontWeight: '900',
-  },
-  actionCardText: {
-    color: '#AEB5BF',
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: spacing.xs,
-  },
-  healthStrip: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
     marginTop: spacing.md,
   },
-  healthTile: {
-    flex: 1,
-    minWidth: 120,
-    borderRadius: 20,
-    padding: spacing.md,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: '#272B35',
+  statValueSmall: {
+    fontSize: 20,
   },
-  healthTileLight: {
-    flex: 1,
-    minWidth: 120,
-    borderRadius: 20,
-    padding: spacing.md,
-    backgroundColor: '#F7F2E8',
-    borderWidth: 1,
-    borderColor: '#E7DFCF',
-  },
-  healthValue: {
-    color: colors.surface,
-    fontSize: 22,
-    fontWeight: '900',
-  },
-  healthLabel: {
-    color: '#98A0AA',
-    fontSize: 12,
-    marginTop: 5,
-  },
-  healthValueDark: {
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: '900',
-  },
-  healthLabelDark: {
-    color: '#6D726F',
-    fontSize: 12,
-    marginTop: 5,
-  },
-  alertStack: {
-    gap: spacing.sm,
-  },
-  alertCard: {
-    borderRadius: 24,
-    padding: spacing.md,
-    backgroundColor: '#FCFAF5',
-    borderWidth: 1,
-    borderColor: '#EBE2CF',
-  },
-  alertTag: {
-    color: colors.brandRed,
-    fontSize: 11,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  alertTitle: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '900',
-    marginTop: spacing.sm,
-  },
-  alertText: {
-    color: '#656A74',
-    fontSize: 13,
-    lineHeight: 19,
-    marginTop: spacing.xs,
-  },
-  surfacePanel: {
-    flex: 1,
-    borderRadius: 30,
-    padding: spacing.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: '#E2DDD2',
-  },
-  stackedList: {
-    gap: spacing.sm,
-  },
-  dataRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    alignItems: 'center',
-    borderRadius: 24,
-    padding: spacing.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: '#E2DDD2',
-  },
-  dataRowCompact: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-  },
-  dataRowLight: {
-    backgroundColor: '#FBF8F1',
-  },
-  dataCopy: {
-    flex: 1,
-  },
-  dataTitle: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  dataTitleLight: {
-    color: colors.text,
-  },
-  dataMeta: {
-    color: '#666C75',
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 4,
-  },
-  dataMetaLight: {
-    color: '#666C75',
-  },
-  dataNote: {
-    color: '#8A9099',
+  statLabel: {
+    color: ui.muted,
     fontSize: 12,
     lineHeight: 17,
-    marginTop: 6,
-  },
-  dataNoteLight: {
-    color: '#8A9099',
-  },
-  dataPill: {
-    borderRadius: 999,
-    backgroundColor: '#101217',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 7,
-  },
-  dataPillCompact: {
-    alignSelf: 'flex-start',
-  },
-  dataPillLight: {
-    backgroundColor: '#F1DEA5',
-  },
-  dataPillText: {
-    color: colors.surface,
-    fontSize: 11,
-    fontWeight: '900',
-  },
-  dataPillTextLight: {
-    color: colors.brandBlack,
+    marginTop: spacing.xs,
   },
   progressStack: {
-    gap: spacing.md,
-  },
-  progressRow: {
     gap: spacing.sm,
+    marginBottom: spacing.md,
   },
-  progressHeader: {
+  progressCard: {
+    borderRadius: 18,
+    backgroundColor: ui.card,
+    borderWidth: 1,
+    borderColor: ui.border,
+    padding: spacing.md,
+  },
+  progressTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: spacing.md,
+    alignItems: 'center',
   },
   progressLabel: {
-    color: colors.text,
-    fontSize: 14,
+    color: ui.text,
+    fontSize: 13,
     fontWeight: '800',
   },
   progressValue: {
-    color: '#5E6470',
-    fontSize: 13,
+    color: ui.text,
+    fontSize: 12,
     fontWeight: '900',
   },
   progressTrack: {
-    height: 10,
+    height: 8,
     borderRadius: 999,
-    backgroundColor: '#ECE5D7',
+    backgroundColor: '#EEF0F3',
     overflow: 'hidden',
+    marginTop: spacing.md,
   },
   progressFill: {
     height: '100%',
     borderRadius: 999,
   },
-  feedPanel: {
-    marginTop: spacing.lg,
-    borderRadius: 22,
-    padding: spacing.md,
-    backgroundColor: '#F8F4EB',
-    borderWidth: 1,
-    borderColor: '#E9E0CF',
-  },
-  feedTitle: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '900',
-    marginBottom: spacing.sm,
-  },
-  feedRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    alignItems: 'flex-start',
-    marginTop: spacing.xs,
-  },
-  feedDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.brandGold,
-    marginTop: 5,
-  },
-  feedText: {
-    flex: 1,
-    color: '#676D77',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  heroPromoPanel: {
-    borderRadius: 30,
-    padding: spacing.lg,
-    backgroundColor: '#111319',
-    borderWidth: 1,
-    borderColor: '#202430',
-    marginBottom: spacing.lg,
-  },
-  heroPromoCopy: {
-    maxWidth: 520,
-  },
-  heroPromoTitle: {
-    color: colors.surface,
-    fontSize: 26,
-    lineHeight: 29,
-    fontWeight: '900',
-  },
-  heroPromoText: {
-    color: '#C2C8D1',
-    fontSize: 14,
-    lineHeight: 21,
+  progressDetail: {
+    color: ui.muted,
+    fontSize: 12,
     marginTop: spacing.sm,
   },
-  primaryInlineButton: {
-    alignSelf: 'flex-start',
-    marginTop: spacing.md,
-    minHeight: 48,
+  sectionCard: {
     borderRadius: 18,
-    backgroundColor: colors.brandGold,
-    paddingHorizontal: spacing.lg,
+    backgroundColor: ui.card,
+    borderWidth: 1,
+    borderColor: ui.border,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  sectionCardTitle: {
+    color: ui.text,
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  upcomingCard: {
+    marginTop: spacing.md,
+    borderRadius: 16,
+    backgroundColor: ui.cardSoft,
+    borderWidth: 1,
+    borderColor: ui.border,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  listIdentity: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flex: 1,
+  },
+  listIdentityCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  avatarCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.brandBlue,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryInlineButtonText: {
-    color: colors.brandBlack,
-    fontSize: 14,
+  avatarCircleSoft: {
+    backgroundColor: ui.tintBlue,
+  },
+  avatarText: {
+    color: colors.surface,
+    fontSize: 12,
     fontWeight: '900',
   },
-  cardGrid: {
-    gap: spacing.md,
+  avatarTextDark: {
+    color: colors.brandBlue,
   },
-  campaignCard: {
-    borderRadius: 26,
-    padding: spacing.md,
-    backgroundColor: colors.surface,
+  listCopy: {
+    flex: 1,
+  },
+  listTitle: {
+    color: ui.text,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  listMeta: {
+    color: ui.muted,
+    fontSize: 12,
+    marginTop: 3,
+  },
+  quickActionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  quickActionButton: {
+    borderRadius: 14,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: ui.tintGold,
+  },
+  quickActionButtonText: {
+    color: colors.brandGold,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  segmentTabs: {
+    gap: spacing.sm,
+    paddingBottom: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  segmentTab: {
+    paddingBottom: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  segmentTabActive: {
+    borderBottomColor: colors.success,
+  },
+  segmentTabText: {
+    color: ui.softText,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  segmentTabTextActive: {
+    color: colors.success,
+    fontWeight: '900',
+  },
+  listStack: {
+    gap: spacing.sm,
+  },
+  listCard: {
+    borderRadius: 18,
+    backgroundColor: ui.card,
     borderWidth: 1,
-    borderColor: '#E2DDD2',
+    borderColor: ui.border,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
-  campaignHeader: {
+  listCardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: spacing.md,
-    alignItems: 'center',
+    gap: spacing.sm,
+    alignItems: 'flex-start',
   },
-  campaignCode: {
-    color: colors.brandRed,
-    fontSize: 20,
-    fontWeight: '900',
-  },
-  campaignStatusPill: {
+  statusBadge: {
     borderRadius: 999,
-    backgroundColor: '#E9F6EC',
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
+    alignSelf: 'flex-start',
   },
-  campaignStatusText: {
-    color: colors.success,
+  statusBadgeText: {
     fontSize: 11,
     fontWeight: '900',
   },
-  campaignValue: {
-    color: colors.text,
-    fontSize: 24,
-    fontWeight: '900',
-    marginTop: spacing.md,
-  },
-  campaignMeta: {
-    color: '#6A6F78',
-    fontSize: 13,
-    marginTop: spacing.xs,
-  },
-  campaignDates: {
-    color: colors.brandBlue,
-    fontSize: 12,
-    fontWeight: '800',
-    marginTop: spacing.sm,
-  },
-  campaignDescription: {
-    color: '#7C818A',
-    fontSize: 13,
-    lineHeight: 19,
-    marginTop: spacing.sm,
-  },
-  builderPanel: {
-    flex: 1.25,
-    borderRadius: 30,
-    padding: spacing.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: '#E2DDD2',
+  bookingMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  builderAside: {
-    flex: 0.75,
-    borderRadius: 30,
-    padding: spacing.lg,
-    backgroundColor: '#111319',
-    borderWidth: 1,
-    borderColor: '#202430',
+  bookingMetaItem: {
+    color: ui.muted,
+    fontSize: 12,
+    fontWeight: '700',
   },
-  builderAsideEyebrow: {
-    color: colors.brandGold,
+  bookingBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  moreText: {
+    color: ui.softText,
     fontSize: 12,
     fontWeight: '900',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
   },
-  builderAsideTitle: {
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    borderRadius: 16,
+    backgroundColor: ui.card,
+    borderWidth: 1,
+    borderColor: ui.border,
+    paddingHorizontal: spacing.md,
+    minHeight: 48,
+    marginBottom: spacing.sm,
+  },
+  searchIcon: {
+    color: ui.softText,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  searchInput: {
+    flex: 1,
+    color: ui.text,
+    fontSize: 14,
+  },
+  searchFilter: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: ui.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  searchFilterText: {
+    color: ui.text,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  inlineButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: '#F7F7F8',
+    borderWidth: 1,
+    borderColor: ui.border,
+  },
+  inlineButtonText: {
+    color: ui.text,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  fab: {
+    position: 'absolute',
+    right: spacing.lg,
+    bottom: 98,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: colors.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: ui.shadow,
+    shadowOpacity: 1,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
+  },
+  fabText: {
     color: colors.surface,
     fontSize: 24,
-    lineHeight: 28,
     fontWeight: '900',
-    marginTop: spacing.sm,
+    marginTop: -2,
   },
-  builderAsideValue: {
-    color: colors.brandGold,
-    fontSize: 18,
+  collectionCard: {
+    borderRadius: 18,
+    backgroundColor: ui.card,
+    borderWidth: 1,
+    borderColor: ui.border,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  collectionValue: {
+    color: ui.text,
+    fontSize: 28,
     fontWeight: '900',
+    marginTop: spacing.xs,
+  },
+  barChartRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+    height: 82,
     marginTop: spacing.md,
   },
-  builderAsideText: {
-    color: '#B6BCC5',
-    fontSize: 13,
-    lineHeight: 19,
-    marginTop: spacing.sm,
+  barChartBar: {
+    width: 10,
+    borderRadius: 999,
   },
-  builderPreviewCard: {
-    marginTop: spacing.lg,
-    borderRadius: 22,
-    padding: spacing.md,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+  noteCard: {
+    borderRadius: 18,
+    backgroundColor: ui.card,
     borderWidth: 1,
-    borderColor: '#292D38',
+    borderColor: ui.border,
+    padding: spacing.md,
+    marginTop: spacing.md,
   },
-  builderPreviewCardTitle: {
-    color: colors.surface,
+  noteTitle: {
+    color: ui.text,
     fontSize: 14,
     fontWeight: '900',
+    marginBottom: spacing.xs,
   },
-  builderPreviewCardText: {
-    color: '#BBC1CB',
+  noteText: {
+    color: ui.muted,
     fontSize: 13,
     lineHeight: 19,
+  },
+  settingsBody: {
+    paddingBottom: spacing.lg,
+  },
+  ratingSummaryCard: {
+    borderRadius: 18,
+    backgroundColor: ui.card,
+    borderWidth: 1,
+    borderColor: ui.border,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  ratingAverage: {
+    color: ui.text,
+    fontSize: 42,
+    fontWeight: '900',
+  },
+  breakdownStack: {
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  breakdownLabel: {
+    width: 12,
+    color: ui.text,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  breakdownTrack: {
+    flex: 1,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: '#EEF0F3',
+    overflow: 'hidden',
+  },
+  breakdownFill: {
+    height: '100%',
+    borderRadius: 999,
+    backgroundColor: colors.success,
+  },
+  breakdownValue: {
+    width: 34,
+    textAlign: 'right',
+    color: ui.muted,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  ratingText: {
+    color: colors.brandGold,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  reviewText: {
+    color: ui.muted,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    flexWrap: 'wrap',
     marginTop: spacing.sm,
+  },
+  approveButton: {
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: ui.tintGreen,
+  },
+  approveButtonText: {
+    color: colors.success,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  deleteButton: {
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: ui.tintRed,
+  },
+  deleteButtonText: {
+    color: colors.brandRed,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  miniStatCard: {
+    borderRadius: 18,
+    backgroundColor: ui.card,
+    borderWidth: 1,
+    borderColor: ui.border,
+    padding: spacing.md,
+    minHeight: 120,
+  },
+  lineChart: {
+    height: 132,
+    marginTop: spacing.md,
+    position: 'relative',
+    borderBottomWidth: 1,
+    borderBottomColor: ui.border,
+  },
+  linePoint: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  analyticsFooter: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  promoCode: {
+    color: colors.brandRed,
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  promoValue: {
+    color: ui.text,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  formCard: {
+    borderRadius: 18,
+    backgroundColor: ui.card,
+    borderWidth: 1,
+    borderColor: ui.border,
+    padding: spacing.md,
+    gap: spacing.sm,
+  },
+  formInput: {
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: '#FAFAFB',
+    borderWidth: 1,
+    borderColor: ui.border,
+    color: ui.text,
+    paddingHorizontal: spacing.md,
+    fontSize: 14,
+  },
+  formTextarea: {
+    minHeight: 96,
+    paddingTop: spacing.md,
+    textAlignVertical: 'top',
   },
   formRow: {
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  formColumn: {
-    flexDirection: 'column',
-  },
-  input: {
+  formInputHalf: {
     flex: 1,
-    minHeight: 50,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#E1DBCF',
-    backgroundColor: '#F8F5EE',
-    color: colors.text,
-    paddingHorizontal: spacing.md,
-    fontSize: 14,
-    fontWeight: '700',
   },
-  descriptionInput: {
-    minHeight: 110,
-    paddingTop: spacing.md,
-    textAlignVertical: 'top',
-  },
-  segmentRow: {
+  segmentWrap: {
     flexDirection: 'row',
-    gap: spacing.xs,
-    backgroundColor: '#F4EFE4',
-    borderRadius: 18,
-    padding: 4,
-  },
-  segmentButton: {
-    flex: 1,
-    minHeight: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  segmentButtonActive: {
-    backgroundColor: colors.brandGold,
-  },
-  segmentButtonText: {
-    color: '#747A84',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  segmentButtonTextActive: {
-    color: colors.brandBlack,
-  },
-  fieldLabel: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: '900',
-    marginTop: spacing.xs,
-  },
-  chipWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  optionChip: {
+  optionPill: {
     borderRadius: 999,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: '#F8F5EE',
+    backgroundColor: '#F7F7F8',
     borderWidth: 1,
-    borderColor: '#E1DBCF',
+    borderColor: ui.border,
   },
-  optionChipActive: {
-    backgroundColor: '#F3E2AF',
-    borderColor: '#DDBE61',
+  optionPillActive: {
+    backgroundColor: ui.tintGold,
+    borderColor: '#F1D58A',
   },
-  optionChipText: {
-    color: '#747A84',
+  optionPillText: {
+    color: ui.muted,
     fontSize: 12,
     fontWeight: '800',
   },
-  optionChipTextActive: {
-    color: colors.brandBlack,
-  },
-  builderActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  primaryButton: {
-    flex: 1,
-    minHeight: 50,
-    borderRadius: 18,
-    backgroundColor: colors.brandRed,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButtonText: {
-    color: colors.surface,
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  secondaryButton: {
-    flex: 1,
-    minHeight: 50,
-    borderRadius: 18,
-    backgroundColor: '#F8F5EE',
-    borderWidth: 1,
-    borderColor: '#E1DBCF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryButtonText: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '800',
+  optionPillTextActive: {
+    color: colors.brandGold,
   },
   formMessage: {
     color: colors.brandBlue,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  reportGrid: {
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  reportCard: {
-    borderRadius: 26,
-    padding: spacing.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: '#E2DDD2',
-  },
-  reportTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  reportText: {
-    color: '#686D77',
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: spacing.sm,
-  },
-  drawerLayer: {
-    ...StyleSheet.absoluteFillObject,
-    flexDirection: 'row',
-    zIndex: 20,
-  },
-  drawerBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(5,7,12,0.48)',
-  },
-  drawerPanel: {
-    height: '100%',
-    backgroundColor: '#0E1015',
-    padding: spacing.md,
-    borderTopRightRadius: 30,
-    borderBottomRightRadius: 30,
-    borderRightWidth: 1,
-    borderRightColor: '#212633',
-    elevation: 10,
-  },
-  drawerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: spacing.md,
-    marginBottom: spacing.md,
-  },
-  drawerTitle: {
-    color: colors.surface,
-    fontSize: 20,
-    fontWeight: '900',
-  },
-  drawerSubtitle: {
-    color: '#9EA5B0',
     fontSize: 12,
-    marginTop: 4,
-  },
-  drawerClose: {
-    borderRadius: 999,
-    backgroundColor: '#181B24',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  drawerCloseText: {
-    color: colors.brandGold,
-    fontSize: 12,
-    fontWeight: '900',
-  },
-  sidebarEyebrow: {
-    color: colors.brandGold,
-    fontSize: 11,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: spacing.sm,
-    paddingHorizontal: spacing.xs,
-  },
-  sidebarItem: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    borderRadius: 18,
-    padding: spacing.sm,
-    marginBottom: spacing.xs,
-  },
-  sidebarItemActive: {
-    backgroundColor: '#171A22',
-    borderWidth: 1,
-    borderColor: '#272B37',
-  },
-  sidebarIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#232733',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sidebarIconActive: {
-    backgroundColor: colors.brandGold,
-  },
-  sidebarIconText: {
-    color: '#D7DCE4',
-    fontSize: 11,
-    fontWeight: '900',
-  },
-  sidebarIconTextActive: {
-    color: colors.brandBlack,
-  },
-  sidebarCopy: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  sidebarLabel: {
-    color: '#D7DCE4',
-    fontSize: 13,
     fontWeight: '800',
   },
-  sidebarLabelActive: {
+  detailsStack: {
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  detailLine: {
+    color: ui.text,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  spacingTop: {
+    marginTop: spacing.md,
+  },
+  actionStack: {
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  primaryAction: {
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: colors.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  primaryActionText: {
     color: colors.surface,
+    fontSize: 13,
+    fontWeight: '900',
   },
-  sidebarMeta: {
-    color: '#8D95A1',
+  secondaryAction: {
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: ui.card,
+    borderWidth: 1,
+    borderColor: ui.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  secondaryActionText: {
+    color: ui.text,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  secondaryActionRed: {
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: ui.card,
+    borderWidth: 1,
+    borderColor: '#F1C2C8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  secondaryActionRedText: {
+    color: colors.brandRed,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  secondaryActionBlue: {
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: ui.card,
+    borderWidth: 1,
+    borderColor: '#CFE0FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  secondaryActionBlueText: {
+    color: colors.brandBlue,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  paymentAmount: {
+    color: ui.text,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  bottomTabs: {
+    position: 'absolute',
+    left: spacing.md,
+    right: spacing.md,
+    bottom: spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: ui.card,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: ui.border,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
+  bottomTab: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 6,
+  },
+  bottomTabDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    backgroundColor: '#D1D5DB',
+  },
+  bottomTabDotActive: {
+    backgroundColor: colors.success,
+  },
+  bottomTabText: {
+    color: ui.softText,
     fontSize: 11,
-    marginTop: 2,
+    fontWeight: '700',
   },
-  sidebarMetaActive: {
-    color: '#B0B7C0',
+  bottomTabTextActive: {
+    color: colors.success,
+    fontWeight: '900',
   },
 });
