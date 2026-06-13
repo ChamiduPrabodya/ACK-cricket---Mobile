@@ -113,9 +113,9 @@ const progressCards = [
 ];
 
 const quickActions = [
-  { key: 'bookings', label: 'Add Booking' },
-  { key: 'bookings', label: 'Block Slot' },
-  { key: 'promotions', label: 'Add Promotion' },
+  { id: 'add-booking', target: 'bookings', label: 'Add Booking' },
+  { id: 'block-slot', target: 'bookings', label: 'Block Slot' },
+  { id: 'add-promotion', target: 'promotions', label: 'Add Promotion' },
 ];
 
 const upcomingBooking = {
@@ -819,14 +819,14 @@ export default function AdminDashboardScreen({
         <View style={styles.quickActionsRow}>
           {quickActions.map((item) => (
             <QuickActionButton
-              key={item.key}
+              key={item.id}
               label={item.label}
               onPress={() => {
-                if (item.key === 'promotions') {
+                if (item.target === 'promotions') {
                   setActiveTab('settings');
                   setSettingsTab('promotions');
                 } else {
-                  setActiveTab(item.key);
+                  setActiveTab(item.target);
                 }
               }}
             />
