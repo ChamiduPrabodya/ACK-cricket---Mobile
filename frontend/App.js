@@ -41,40 +41,57 @@ export default function App() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" />
 
-            <Pressable
-              onPress={() => setActiveRole('user')}
-              style={[
-                styles.switchPill,
-
-                activeRole === 'user' && styles.switchPillActive,
-              ]}
-            >
-              <Text
+      <View style={styles.headerShell}>
+        <View style={styles.headerGlow} />
+        <View style={[styles.header, phone && styles.headerPhone]}>
+          <View style={styles.headerContent}>
+            <View style={[styles.brandRow, phone && styles.brandRowPhone]}>
+              <Image
+                source={logo}
                 style={[
-                  styles.switchText,
-                  activeRole === 'user' && styles.switchTextActive,
+                  styles.logo,
+                  phone && styles.logoPhone,
+                  compact && styles.logoCompact,
+                ]}
+              />
+              <View style={styles.brandBlock}>
+                <Text style={styles.brandTitle}>ACK Cricket</Text>
+              </View>
+            </View>
+            <View style={[styles.switcher, phone && styles.switcherPhone, compact && styles.switcherCompact]}>
+              <Pressable
+                onPress={() => setActiveRole('user')}
+                style={[
+                  styles.switchPill,
+                  activeRole === 'user' && styles.switchPillActive,
                 ]}
               >
-                User
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setActiveRole('admin')}
-              style={[
-                styles.switchPill,
-
-                activeRole === 'admin' && styles.switchPillActive,
-              ]}
-            >
-              <Text
+                <Text
+                  style={[
+                    styles.switchText,
+                    activeRole === 'user' && styles.switchTextActive,
+                  ]}
+                >
+                  User
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setActiveRole('admin')}
                 style={[
-                  styles.switchText,
-                  activeRole === 'admin' && styles.switchTextActive,
+                  styles.switchPill,
+                  activeRole === 'admin' && styles.switchPillActive,
                 ]}
               >
-                Admin
-              </Text>
-            </Pressable>
+                <Text
+                  style={[
+                    styles.switchText,
+                    activeRole === 'admin' && styles.switchTextActive,
+                  ]}
+                >
+                  Admin
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       </View>
