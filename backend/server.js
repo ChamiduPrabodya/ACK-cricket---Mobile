@@ -15,3 +15,7 @@ app.use("/api/promotions", promotionRoutes);
 
 const PORT = process.env.PORT || 5000;
 
+app.listen(PORT, () => {
+  console.log(`ACK cricket backend running on port ${PORT}`);
+});
+
