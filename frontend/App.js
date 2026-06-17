@@ -40,49 +40,12 @@ export default function App() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" />
-      <View style={styles.headerShell}>
-        <View pointerEvents="none" style={styles.headerGlow} />
-        <View style={[styles.header, phone && styles.headerPhone]}>
-          <View style={[styles.brandRow, phone && styles.brandRowPhone]}>
-            <Image
-              source={logo}
-              style={[styles.logo, phone && styles.logoPhone, compact && styles.logoCompact]}
-              resizeMode="contain"
-            />
-            <View style={styles.brandBlock}>
-              <Text
-                style={[
-                  styles.brandTitle,
-                  phone && styles.brandTitlePhone,
-                  compact && styles.brandTitleCompact,
-                ]}
-              >
-                ACK Indoor Cricket
-              </Text>
-              <Text
-                style={[
-                  styles.brandSubtitle,
-                  phone && styles.brandSubtitlePhone,
-                  compact && styles.brandSubtitleCompact,
-                ]}
-              >
-                Switch between the player experience and the admin workspace
-              </Text>
-            </View>
-          </View>
 
-          <View
-            style={[
-              styles.switcher,
-              phone && styles.switcherPhone,
-              compact && styles.switcherCompact,
-            ]}
-          >
             <Pressable
               onPress={() => setActiveRole('user')}
               style={[
                 styles.switchPill,
-                compact && styles.switchPillCompact,
+
                 activeRole === 'user' && styles.switchPillActive,
               ]}
             >
@@ -99,7 +62,7 @@ export default function App() {
               onPress={() => setActiveRole('admin')}
               style={[
                 styles.switchPill,
-                compact && styles.switchPillCompact,
+
                 activeRole === 'admin' && styles.switchPillActive,
               ]}
             >
@@ -167,6 +130,10 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: spacing.sm,
   },
+  headerContent: {
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -194,24 +161,12 @@ const styles = StyleSheet.create({
   },
   brandBlock: {
     flex: 1,
-    marginBottom: spacing.md,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   brandTitle: {
     color: colors.surface,
-    fontSize: 24,
-    fontWeight: '900',
-  },
-  brandTitlePhone: {
-    fontSize: 18,
-    lineHeight: 22,
-  },
-  brandTitleCompact: {
-    fontSize: 20,
-  },
-  brandSubtitle: {
-    color: '#B7BDC8',
-    fontSize: 14,
-    marginTop: spacing.xs,
+
   },
   brandSubtitlePhone: {
     fontSize: 11,
@@ -227,6 +182,7 @@ const styles = StyleSheet.create({
     padding: 4,
     gap: spacing.xs,
     alignSelf: 'flex-start',
+    marginLeft: 68 + spacing.md,
     borderWidth: 1,
     borderColor: '#252830',
   },

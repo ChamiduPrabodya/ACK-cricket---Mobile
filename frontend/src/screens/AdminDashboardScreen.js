@@ -366,11 +366,7 @@ const campaignOptions = [
   { label: 'Seasonal', value: 'seasonal' },
 ];
 
-function initialsFromName(name) {
-  const parts = name.split(' ').filter(Boolean);
-  if (!parts.length) {
-    return 'A';
-  }
+
 
   return parts
     .slice(0, 2)
@@ -378,8 +374,6 @@ function initialsFromName(name) {
     .join('');
 }
 
-function badgeTone(label) {
-  const normalized = label.toLowerCase();
 
   if (normalized.includes('approved') || normalized.includes('paid') || normalized.includes('active') || normalized.includes('available') || normalized.includes('gold')) {
     return { bg: ui.tintGreen, color: colors.success };
@@ -435,12 +429,7 @@ function AppHeader({ title, subtitle, onBack, rightLabel }) {
 function StatusBadge({ label }) {
   const tone = badgeTone(label);
 
-  return (
-    <View style={[styles.statusBadge, { backgroundColor: tone.bg }]}>
-      <Text style={[styles.statusBadgeText, { color: tone.color }]}>{label}</Text>
-    </View>
-  );
-}
+
 
 function SegmentTabs({ items, value, onChange }) {
   return (
@@ -2000,15 +1989,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '900',
   },
-  secondaryAction: {
-    minHeight: 48,
-    borderRadius: 14,
-    backgroundColor: ui.card,
-    borderWidth: 1,
-    borderColor: ui.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
+
   },
   secondaryActionText: {
     color: ui.text,
